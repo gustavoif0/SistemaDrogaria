@@ -101,9 +101,25 @@ model Supplier {
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String
-  products Product[]
+  id            String        @id @default(cuid())
+  name          String
+  description   String?
+  status        String        @default("active")
+  products      Product[]
+  subcategories Subcategory[]
+}
+
+model Subcategory {
+  id                       String    @id @default(cuid())
+  categoryId               String
+  category                 Category  @relation(fields: [categoryId], references: [id])
+  name                     String
+  description              String?
+  status                   String    @default("active")
+  requiresPharmacistReview Boolean   @default(false)
+  products                 Product[]
+
+  @@index([categoryId])
 }
 
 model Manufacturer {
@@ -118,6 +134,8 @@ model Product {
   company                      Company             @relation(fields: [companyId], references: [id])
   categoryId                   String?
   category                     Category?           @relation(fields: [categoryId], references: [id])
+  subcategoryId                String?
+  subcategory                  Subcategory?        @relation(fields: [subcategoryId], references: [id])
   manufacturerId               String?
   manufacturer                 Manufacturer?       @relation(fields: [manufacturerId], references: [id])
   supplierId                   String?

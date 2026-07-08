@@ -15,6 +15,7 @@ interface ProductFormState {
   name: string;
   barcode: string;
   category: string;
+  subcategory: string;
   manufacturer: string;
   supplier: string;
   salePrice: string;
@@ -41,6 +42,7 @@ const emptyForm: ProductFormState = {
   name: "",
   barcode: "",
   category: "Medicamentos",
+  subcategory: "Analgesicos",
   manufacturer: "",
   supplier: "",
   salePrice: "",
@@ -58,6 +60,7 @@ const fieldLabels: Record<keyof ProductFormState, string> = {
   name: "Nome do produto",
   barcode: "Codigo de barras",
   category: "Categoria",
+  subcategory: "Subcategoria",
   manufacturer: "Fabricante",
   supplier: "Fornecedor",
   salePrice: "Preco de venda",
@@ -84,6 +87,7 @@ function productToForm(product: Product): ProductFormState {
     name: product.name,
     barcode: product.barcode,
     category: product.category,
+    subcategory: product.subcategory,
     manufacturer: product.manufacturer,
     supplier: product.supplier,
     salePrice: numberText(product.salePrice),
@@ -103,6 +107,7 @@ function formToProductChanges(form: ProductFormState): Partial<Product> {
     name: form.name.trim(),
     barcode: form.barcode.trim(),
     category: form.category.trim(),
+    subcategory: form.subcategory.trim(),
     manufacturer: form.manufacturer.trim(),
     supplier: form.supplier.trim(),
     salePrice: Number(form.salePrice),
@@ -128,6 +133,7 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
     { key: "name", before: product.name, after: form.name.trim() },
     { key: "barcode", before: product.barcode, after: form.barcode.trim() },
     { key: "category", before: product.category, after: form.category.trim() },
+    { key: "subcategory", before: product.subcategory, after: form.subcategory.trim() },
     { key: "manufacturer", before: product.manufacturer, after: form.manufacturer.trim() },
     { key: "supplier", before: product.supplier, after: form.supplier.trim() },
   ];
@@ -190,7 +196,7 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
 }
 
 export function ProductsPage() {
-  const { products, addProduct, updateProduct } = usePharma();
+  const { products, categories, subcategories, addProduct, updateProduct } = usePharma();
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -205,7 +211,7 @@ export function ProductsPage() {
     if (!term) return products;
 
     return products.filter((product) =>
-      [product.name, product.internalCode, product.barcode, product.reference, product.category]
+      [product.name, product.internalCode, product.barcode, product.reference, product.category, product.subcategory]
         .join(" ")
         .toLowerCase()
         .includes(term),
@@ -224,6 +230,26 @@ export function ProductsPage() {
 
   function updateEditForm<K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) {
     setEditForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function getSubcategoriesForCategory(categoryName: string) {
+    const category = categories.find((item) => item.name === categoryName);
+
+    if (!category) return [];
+
+    return subcategories.filter(
+      (subcategory) => subcategory.categoryId === category.id && subcategory.status === "active",
+    );
+  }
+
+  function updateFormCategory(categoryName: string) {
+    const firstSubcategory = getSubcategoriesForCategory(categoryName)[0]?.name ?? "";
+    setForm((current) => ({ ...current, category: categoryName, subcategory: firstSubcategory }));
+  }
+
+  function updateEditFormCategory(categoryName: string) {
+    const firstSubcategory = getSubcategoriesForCategory(categoryName)[0]?.name ?? "";
+    setEditForm((current) => ({ ...current, category: categoryName, subcategory: firstSubcategory }));
   }
 
   function openEdit(product: Product) {
@@ -268,6 +294,7 @@ export function ProductsPage() {
       name: form.name,
       barcode: form.barcode,
       category: form.category,
+      subcategory: form.subcategory,
       manufacturer: form.manufacturer,
       supplier: form.supplier,
       salePrice: Number(form.salePrice),
@@ -347,7 +374,15 @@ export function ProductsPage() {
                 </div>
               ),
             },
-            { header: "Categoria", render: (product) => product.category },
+            {
+              header: "Classificacao",
+              render: (product) => (
+                <div>
+                  <p className="font-medium text-slate-800">{product.category}</p>
+                  <p className="text-xs text-slate-500">{product.subcategory}</p>
+                </div>
+              ),
+            },
             { header: "Fabricante", render: (product) => product.manufacturer },
             {
               header: "Status",
@@ -427,12 +462,34 @@ export function ProductsPage() {
                       />
                     </FormField>
                     <FormField label="Categoria">
-                      <input
+                      <select
                         required
                         className={inputClassName}
                         value={form.category}
-                        onChange={(event) => updateForm("category", event.target.value)}
-                      />
+                        onChange={(event) => updateFormCategory(event.target.value)}
+                      >
+                        {categories
+                          .filter((category) => category.status === "active")
+                          .map((category) => (
+                            <option key={category.id} value={category.name}>
+                              {category.name}
+                            </option>
+                          ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Subcategoria">
+                      <select
+                        required
+                        className={inputClassName}
+                        value={form.subcategory}
+                        onChange={(event) => updateForm("subcategory", event.target.value)}
+                      >
+                        {getSubcategoriesForCategory(form.category).map((subcategory) => (
+                          <option key={subcategory.id} value={subcategory.name}>
+                            {subcategory.name}
+                          </option>
+                        ))}
+                      </select>
                     </FormField>
                     <FormField label="Fabricante">
                       <input
@@ -629,11 +686,32 @@ export function ProductsPage() {
                         />
                       </FormField>
                       <FormField label="Categoria">
-                        <input
+                        <select
                           className={inputClassName}
                           value={editForm.category}
-                          onChange={(event) => updateEditForm("category", event.target.value)}
-                        />
+                          onChange={(event) => updateEditFormCategory(event.target.value)}
+                        >
+                          {categories
+                            .filter((category) => category.status === "active")
+                            .map((category) => (
+                              <option key={category.id} value={category.name}>
+                                {category.name}
+                              </option>
+                            ))}
+                        </select>
+                      </FormField>
+                      <FormField label="Subcategoria">
+                        <select
+                          className={inputClassName}
+                          value={editForm.subcategory}
+                          onChange={(event) => updateEditForm("subcategory", event.target.value)}
+                        >
+                          {getSubcategoriesForCategory(editForm.category).map((subcategory) => (
+                            <option key={subcategory.id} value={subcategory.name}>
+                              {subcategory.name}
+                            </option>
+                          ))}
+                        </select>
                       </FormField>
                       <FormField label="Fabricante">
                         <input

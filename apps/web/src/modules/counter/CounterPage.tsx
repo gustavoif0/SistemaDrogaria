@@ -29,7 +29,7 @@ export function CounterPage() {
     if (!term) return products.slice(0, 8);
 
     return products.filter((product) =>
-      [product.name, product.internalCode, product.barcode, product.reference, product.category]
+      [product.name, product.internalCode, product.barcode, product.reference, product.category, product.subcategory]
         .join(" ")
         .toLowerCase()
         .includes(term),

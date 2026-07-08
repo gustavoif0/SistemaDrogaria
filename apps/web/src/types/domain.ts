@@ -44,6 +44,7 @@ export interface Product {
   unit: string;
   type: string;
   category: string;
+  subcategory: string;
   manufacturer: string;
   supplier: string;
   activeIngredient: string;
@@ -72,6 +73,22 @@ export interface Product {
   stock: number;
   location: string;
   batches: Batch[];
+}
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  description: string;
+  status: ProductStatus;
+}
+
+export interface ProductSubcategory {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  status: ProductStatus;
+  requiresPharmacistReview: boolean;
 }
 
 export interface PreSaleItem {

@@ -9,10 +9,12 @@ import {
 import {
   company,
   currentUser,
+  initialCategories,
   initialFinanceMovements,
   initialPreSales,
   initialProducts,
   initialSales,
+  initialSubcategories,
   stockEntryMock,
 } from "../mocks/mockData";
 import type {
@@ -21,6 +23,8 @@ import type {
   PreSale,
   PreSaleItem,
   Product,
+  ProductCategory,
+  ProductSubcategory,
   Sale,
 } from "../types/domain";
 import { buildStockAlerts, summarizeItems, validateSaleItem } from "../lib/salesRules";
@@ -30,6 +34,7 @@ type ProductDraft = Pick<
   | "name"
   | "barcode"
   | "category"
+  | "subcategory"
   | "manufacturer"
   | "supplier"
   | "salePrice"
@@ -40,10 +45,16 @@ type ProductDraft = Pick<
 > &
   Partial<Product>;
 
+type CategoryDraft = Omit<ProductCategory, "id">;
+
+type SubcategoryDraft = Omit<ProductSubcategory, "id">;
+
 interface PharmaContextValue {
   company: typeof company;
   currentUser: typeof currentUser;
   products: Product[];
+  categories: ProductCategory[];
+  subcategories: ProductSubcategory[];
   preSales: PreSale[];
   sales: Sale[];
   financeMovements: FinanceMovement[];
@@ -51,6 +62,10 @@ interface PharmaContextValue {
   stockEntryMock: typeof stockEntryMock;
   addProduct: (draft: ProductDraft) => Product;
   updateProduct: (productId: string, changes: Partial<Product>) => void;
+  addCategory: (draft: CategoryDraft) => ProductCategory;
+  updateCategory: (categoryId: string, changes: Partial<ProductCategory>) => void;
+  addSubcategory: (draft: SubcategoryDraft) => ProductSubcategory;
+  updateSubcategory: (subcategoryId: string, changes: Partial<ProductSubcategory>) => void;
   sendPreSaleToCashier: (customerName: string, items: PreSaleItem[]) => PreSale;
   finalizeSale: (
     preSaleId: string,
@@ -72,6 +87,9 @@ function makeNumber(prefix: string, length: number) {
 
 export function PharmaProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categories, setCategories] = useState<ProductCategory[]>(initialCategories);
+  const [subcategories, setSubcategories] =
+    useState<ProductSubcategory[]>(initialSubcategories);
   const [preSales, setPreSales] = useState<PreSale[]>(initialPreSales);
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [financeMovements, setFinanceMovements] = useState<FinanceMovement[]>(
@@ -94,6 +112,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       unit: draft.unit ?? "CX",
       type: draft.type ?? "Medicamento",
       category: draft.category,
+      subcategory: draft.subcategory ?? "Sem subcategoria",
       manufacturer: draft.manufacturer,
       supplier: draft.supplier,
       activeIngredient: draft.activeIngredient ?? "Nao informado",
@@ -133,6 +152,67 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       current.map((product) => (product.id === productId ? { ...product, ...changes } : product)),
     );
   }, []);
+
+  const addCategory = useCallback((draft: CategoryDraft) => {
+    const category: ProductCategory = {
+      ...draft,
+      id: makeId("cat"),
+    };
+
+    setCategories((current) => [category, ...current]);
+    return category;
+  }, []);
+
+  const updateCategory = useCallback((categoryId: string, changes: Partial<ProductCategory>) => {
+    setCategories((current) => {
+      const existing = current.find((category) => category.id === categoryId);
+
+      if (existing && changes.name && changes.name !== existing.name) {
+        setProducts((currentProducts) =>
+          currentProducts.map((product) =>
+            product.category === existing.name ? { ...product, category: changes.name! } : product,
+          ),
+        );
+      }
+
+      return current.map((category) =>
+        category.id === categoryId ? { ...category, ...changes } : category,
+      );
+    });
+  }, []);
+
+  const addSubcategory = useCallback((draft: SubcategoryDraft) => {
+    const subcategory: ProductSubcategory = {
+      ...draft,
+      id: makeId("sub"),
+    };
+
+    setSubcategories((current) => [subcategory, ...current]);
+    return subcategory;
+  }, []);
+
+  const updateSubcategory = useCallback(
+    (subcategoryId: string, changes: Partial<ProductSubcategory>) => {
+      setSubcategories((current) => {
+        const existing = current.find((subcategory) => subcategory.id === subcategoryId);
+
+        if (existing && changes.name && changes.name !== existing.name) {
+          setProducts((currentProducts) =>
+            currentProducts.map((product) =>
+              product.subcategory === existing.name
+                ? { ...product, subcategory: changes.name! }
+                : product,
+            ),
+          );
+        }
+
+        return current.map((subcategory) =>
+          subcategory.id === subcategoryId ? { ...subcategory, ...changes } : subcategory,
+        );
+      });
+    },
+    [],
+  );
 
   const sendPreSaleToCashier = useCallback(
     (customerName: string, items: PreSaleItem[]) => {
@@ -253,6 +333,8 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       company,
       currentUser,
       products,
+      categories,
+      subcategories,
       preSales,
       sales,
       financeMovements,
@@ -260,19 +342,29 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       stockEntryMock,
       addProduct,
       updateProduct,
+      addCategory,
+      updateCategory,
+      addSubcategory,
+      updateSubcategory,
       sendPreSaleToCashier,
       finalizeSale,
       getProductById,
     }),
     [
       addProduct,
+      addCategory,
+      addSubcategory,
+      categories,
       financeMovements,
       finalizeSale,
       getProductById,
       preSales,
       products,
       sales,
+      subcategories,
+      updateCategory,
       updateProduct,
+      updateSubcategory,
     ],
   );
 

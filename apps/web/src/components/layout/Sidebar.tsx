@@ -15,7 +15,7 @@ import {
   Settings,
   ShoppingCart,
   Store,
-  Truck,
+  Tags,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -25,6 +25,7 @@ const groups = [
     items: [
       { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
       { label: "Produtos", to: "/produtos", icon: Pill },
+      { label: "Categorias", to: "/categorias", icon: Tags },
       { label: "Atendimento", to: "/balcao", icon: HandCoins },
       { label: "PDV / Caixa", to: "/pdv", icon: ShoppingCart },
       { label: "Entrada XML", to: "/estoque/entrada", icon: PackagePlus },

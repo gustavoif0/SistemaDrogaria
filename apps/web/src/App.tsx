@@ -4,6 +4,7 @@ import { CounterPage } from "./modules/counter/CounterPage";
 import { DashboardPage } from "./modules/dashboard/DashboardPage";
 import { FinancePage } from "./modules/finance/FinancePage";
 import { PdvPage } from "./modules/pdv/PdvPage";
+import { CategoriesPage } from "./modules/products/CategoriesPage";
 import { ProductsPage } from "./modules/products/ProductsPage";
 import { ReportsPage } from "./modules/reports/ReportsPage";
 import { ModulePlaceholder } from "./modules/settings/ModulePlaceholder";
@@ -18,6 +19,7 @@ export function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/produtos" element={<ProductsPage />} />
+        <Route path="/categorias" element={<CategoriesPage />} />
         <Route path="/balcao" element={<CounterPage />} />
         <Route path="/pdv" element={<PdvPage />} />
         <Route path="/estoque/entrada" element={<StockEntryPage />} />
