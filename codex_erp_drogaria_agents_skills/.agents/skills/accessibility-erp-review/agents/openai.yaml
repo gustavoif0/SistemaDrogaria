@@ -1,0 +1,6 @@
+interface:
+  display_name: "Accessibility Erp Review"
+  short_description: "Skill do PharmaERP para accessibility erp review."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

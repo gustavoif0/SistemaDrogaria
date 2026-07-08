@@ -1,0 +1,6 @@
+interface:
+  display_name: "Sngpc Compliance Flow"
+  short_description: "Skill do PharmaERP para sngpc compliance flow."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

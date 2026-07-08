@@ -1,0 +1,14 @@
+{
+  "name": "pharmaerp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ERP web academico para drogarias e farmacias.",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @pharmaerp/web",
+    "build": "npm run build -w @pharmaerp/web",
+    "preview": "npm run preview -w @pharmaerp/web"
+  }
+}

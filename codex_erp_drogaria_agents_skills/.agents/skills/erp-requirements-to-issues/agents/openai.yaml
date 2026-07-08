@@ -1,0 +1,6 @@
+interface:
+  display_name: "Erp Requirements To Issues"
+  short_description: "Skill do PharmaERP para erp requirements to issues."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

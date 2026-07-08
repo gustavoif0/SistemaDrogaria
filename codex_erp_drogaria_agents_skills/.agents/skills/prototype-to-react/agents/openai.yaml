@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prototype To React"
+  short_description: "Skill do PharmaERP para prototype to react."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

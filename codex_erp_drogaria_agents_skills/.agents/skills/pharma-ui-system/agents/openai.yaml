@@ -1,0 +1,6 @@
+interface:
+  display_name: "Pharma Ui System"
+  short_description: "Skill do PharmaERP para pharma ui system."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Postgres Domain Model"
+  short_description: "Skill do PharmaERP para postgres domain model."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

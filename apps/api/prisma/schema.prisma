@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum PreSaleStatus {
+  draft
+  sent_to_cashier
+  closed
+  cancelled
+}
+
+enum FiscalStatus {
+  mock_authorized
+  mock_processing
+  mock_rejected
+}
+
+enum MovementOrigin {
+  sale
+  purchase_entry
+  adjustment
+  transfer
+  cancellation
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  document  String   @unique
+  stores    Store[]
+  users     User[]
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id             String          @id @default(cuid())
+  companyId      String
+  company        Company         @relation(fields: [companyId], references: [id])
+  name           String
+  document       String
+  stockBalances  StockBalance[]
+  batches        Batch[]
+  preSales       PreSale[]
+  sales          Sale[]
+  stockMovements StockMovement[]
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  users       User[]
+  permissions Permission[]
+}
+
+model Permission {
+  id     String @id @default(cuid())
+  key    String @unique
+  label  String
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  name      String
+  email     String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  document  String?
+  phone     String?
+  preSales  PreSale[]
+  sales     Sale[]
+}
+
+model Supplier {
+  id       String    @id @default(cuid())
+  name     String
+  document String?
+  products Product[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Manufacturer {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Product {
+  id                           String              @id @default(cuid())
+  companyId                    String
+  company                      Company             @relation(fields: [companyId], references: [id])
+  categoryId                   String?
+  category                     Category?           @relation(fields: [categoryId], references: [id])
+  manufacturerId               String?
+  manufacturer                 Manufacturer?       @relation(fields: [manufacturerId], references: [id])
+  supplierId                   String?
+  supplier                     Supplier?           @relation(fields: [supplierId], references: [id])
+  internalCode                 String
+  barcode                      String?
+  reference                    String?
+  name                         String
+  description                  String?
+  unit                         String
+  activeIngredient             String?
+  msRegistration               String?
+  status                       ProductStatus       @default(active)
+  allowDiscount                Boolean             @default(true)
+  maxDiscountPercent           Decimal             @default(0)
+  allowFractional              Boolean             @default(false)
+  controlsBatch                Boolean             @default(false)
+  controlsExpiry               Boolean             @default(false)
+  controlledMedicine           Boolean             @default(false)
+  participatesPbm              Boolean             @default(false)
+  participatesPopularPharmacy  Boolean             @default(false)
+  ncm                          String?
+  cest                         String?
+  cfop                         String?
+  stockBalances                StockBalance[]
+  batches                      Batch[]
+  preSaleItems                 PreSaleItem[]
+  saleItems                    SaleItem[]
+
+  @@unique([companyId, internalCode])
+  @@index([name])
+  @@index([barcode])
+}
+
+model ProductPrice {
+  id        String   @id @default(cuid())
+  productId String
+  priceName String
+  amount    Decimal
+  createdAt DateTime @default(now())
+}
+
+model StockBalance {
+  id        String  @id @default(cuid())
+  storeId   String
+  store     Store   @relation(fields: [storeId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Decimal @default(0)
+  minStock  Decimal @default(0)
+  maxStock  Decimal @default(0)
+
+  @@unique([storeId, productId])
+}
+
+model Batch {
+  id         String          @id @default(cuid())
+  storeId    String
+  store      Store           @relation(fields: [storeId], references: [id])
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  code       String
+  expiryDate DateTime
+  quantity   Decimal         @default(0)
+  movements  StockMovement[]
+
+  @@index([productId, expiryDate])
+}
+
+model StockMovement {
+  id        String         @id @default(cuid())
+  storeId   String
+  store     Store          @relation(fields: [storeId], references: [id])
+  productId String
+  batchId   String?
+  batch     Batch?         @relation(fields: [batchId], references: [id])
+  origin    MovementOrigin
+  quantity  Decimal
+  cost      Decimal?
+  createdAt DateTime       @default(now())
+}
+
+model PreSale {
+  id          String         @id @default(cuid())
+  storeId     String
+  store       Store          @relation(fields: [storeId], references: [id])
+  customerId  String?
+  customer    Customer?      @relation(fields: [customerId], references: [id])
+  number      String
+  status      PreSaleStatus  @default(draft)
+  subtotal    Decimal
+  discount    Decimal
+  total       Decimal
+  items       PreSaleItem[]
+  sale        Sale?
+  createdAt   DateTime       @default(now())
+  sentAt      DateTime?
+  closedAt    DateTime?
+
+  @@index([status])
+}
+
+model PreSaleItem {
+  id              String  @id @default(cuid())
+  preSaleId       String
+  preSale         PreSale @relation(fields: [preSaleId], references: [id])
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  productSnapshot String
+  batchId         String?
+  quantity        Decimal
+  unitPrice       Decimal
+  discountPercent Decimal
+  total           Decimal
+}
+
+model Sale {
+  id             String               @id @default(cuid())
+  storeId        String
+  store          Store                @relation(fields: [storeId], references: [id])
+  customerId     String?
+  customer       Customer?            @relation(fields: [customerId], references: [id])
+  preSaleId      String               @unique
+  preSale        PreSale              @relation(fields: [preSaleId], references: [id])
+  number         String
+  fiscalStatus   FiscalStatus         @default(mock_authorized)
+  total          Decimal
+  payments       Payment[]
+  items          SaleItem[]
+  fiscalDocument FiscalDocumentMock?
+  finance        FinanceMovement[]
+  createdAt      DateTime             @default(now())
+}
+
+model SaleItem {
+  id              String  @id @default(cuid())
+  saleId          String
+  sale            Sale    @relation(fields: [saleId], references: [id])
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  productSnapshot String
+  batchId         String?
+  quantity        Decimal
+  unitPrice       Decimal
+  discountPercent Decimal
+  total           Decimal
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  method    String
+  amount    Decimal
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model FinanceMovement {
+  id          String   @id @default(cuid())
+  saleId      String?
+  sale        Sale?    @relation(fields: [saleId], references: [id])
+  description String
+  kind        String
+  amount      Decimal
+  status      String
+  createdAt   DateTime @default(now())
+}
+
+model AccountsPayable {
+  id          String   @id @default(cuid())
+  supplierId  String?
+  description String
+  amount      Decimal
+  dueDate     DateTime
+  status      String
+}
+
+model AccountsReceivable {
+  id          String   @id @default(cuid())
+  customerId  String?
+  description String
+  amount      Decimal
+  dueDate     DateTime
+  status      String
+}
+
+model InvoiceEntry {
+  id        String             @id @default(cuid())
+  supplier  String
+  accessKey String
+  total     Decimal
+  items     InvoiceEntryItem[]
+  createdAt DateTime           @default(now())
+}
+
+model InvoiceEntryItem {
+  id             String       @id @default(cuid())
+  invoiceEntryId String
+  invoiceEntry   InvoiceEntry @relation(fields: [invoiceEntryId], references: [id])
+  productId      String?
+  invoiceName    String
+  quantity       Decimal
+  cost           Decimal
+  batchCode      String?
+  expiryDate     DateTime?
+}
+
+model FiscalDocumentMock {
+  id        String       @id @default(cuid())
+  saleId    String       @unique
+  sale      Sale         @relation(fields: [saleId], references: [id])
+  status    FiscalStatus
+  number    String?
+  payload   Json?
+  createdAt DateTime     @default(now())
+}
+
+model ControlledPrescription {
+  id             String              @id @default(cuid())
+  customerName   String
+  prescriberName String
+  documentNumber String
+  movements      SngpcMovementMock[]
+  createdAt      DateTime            @default(now())
+}
+
+model SngpcMovementMock {
+  id                     String                 @id @default(cuid())
+  controlledPrescriptionId String
+  prescription           ControlledPrescription @relation(fields: [controlledPrescriptionId], references: [id])
+  productId              String
+  batchCode              String
+  quantity               Decimal
+  movementType           String
+  createdAt              DateTime               @default(now())
+}
+
+model ExternalIntegrationMock {
+  id        String   @id @default(cuid())
+  name      String
+  kind      String
+  status    String
+  payload   Json?
+  createdAt DateTime @default(now())
+}

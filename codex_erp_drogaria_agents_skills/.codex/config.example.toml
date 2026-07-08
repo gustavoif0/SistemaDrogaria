@@ -1,0 +1,11 @@
+# Exemplo de configuração local do Codex para este projeto.
+# Copie para .codex/config.toml se quiser usar como base.
+
+# Ajuste conforme seu ambiente e política de segurança.
+# Este arquivo não deve conter chaves, tokens ou credenciais.
+
+[project]
+name = "pharmaerp-academico"
+
+# Recomenda-se usar modo de planejamento para tarefas grandes antes de implementar.
+# Use AGENTS.md e skills em .agents/skills como orientação principal.

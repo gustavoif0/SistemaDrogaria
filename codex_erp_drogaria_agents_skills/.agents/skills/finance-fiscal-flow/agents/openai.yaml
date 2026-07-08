@@ -1,0 +1,6 @@
+interface:
+  display_name: "Finance Fiscal Flow"
+  short_description: "Skill do PharmaERP para finance fiscal flow."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Qa Playwright Regression"
+  short_description: "Skill do PharmaERP para qa playwright regression."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true

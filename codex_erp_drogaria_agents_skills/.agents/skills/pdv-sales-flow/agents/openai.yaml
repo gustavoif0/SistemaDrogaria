@@ -1,0 +1,6 @@
+interface:
+  display_name: "Pdv Sales Flow"
+  short_description: "Skill do PharmaERP para pdv sales flow."
+  brand_color: "#16A34A"
+policy:
+  allow_implicit_invocation: true
