@@ -375,16 +375,14 @@ export function CategoriesPage() {
                     {
                       header: "Categoria",
                       render: (category) => (
-                        <div>
-                          <button
-                            type="button"
-                            className="text-left font-semibold text-pharma-700 underline-offset-2 hover:underline"
-                            onClick={() => setSelectedCategory(category)}
-                          >
-                            {category.name}
-                          </button>
-                          <p className="text-xs text-slate-500">{category.description}</p>
-                        </div>
+                        <button
+                          type="button"
+                          className="-m-2 block w-full rounded-md p-2 text-left transition hover:bg-pharma-50 focus:outline-none focus:ring-4 focus:ring-pharma-100"
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          <span className="block font-semibold text-pharma-700">{category.name}</span>
+                          <span className="mt-1 block text-xs text-slate-500">{category.description}</span>
+                        </button>
                       ),
                     },
                     {
