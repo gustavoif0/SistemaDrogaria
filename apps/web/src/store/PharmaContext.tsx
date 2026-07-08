@@ -50,6 +50,7 @@ interface PharmaContextValue {
   stockAlerts: ReturnType<typeof buildStockAlerts>;
   stockEntryMock: typeof stockEntryMock;
   addProduct: (draft: ProductDraft) => Product;
+  updateProduct: (productId: string, changes: Partial<Product>) => void;
   sendPreSaleToCashier: (customerName: string, items: PreSaleItem[]) => PreSale;
   finalizeSale: (
     preSaleId: string,
@@ -125,6 +126,12 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
 
     setProducts((current) => [product, ...current]);
     return product;
+  }, []);
+
+  const updateProduct = useCallback((productId: string, changes: Partial<Product>) => {
+    setProducts((current) =>
+      current.map((product) => (product.id === productId ? { ...product, ...changes } : product)),
+    );
   }, []);
 
   const sendPreSaleToCashier = useCallback(
@@ -252,6 +259,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       stockAlerts: buildStockAlerts(products),
       stockEntryMock,
       addProduct,
+      updateProduct,
       sendPreSaleToCashier,
       finalizeSale,
       getProductById,
@@ -264,6 +272,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       preSales,
       products,
       sales,
+      updateProduct,
     ],
   );
 
