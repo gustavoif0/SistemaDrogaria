@@ -16,6 +16,8 @@ import {
   ShoppingCart,
   Store,
   Tags,
+  UserCog,
+  Users,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -29,6 +31,17 @@ const groups = [
       { label: "Atendimento", to: "/balcao", icon: HandCoins },
       { label: "PDV / Caixa", to: "/pdv", icon: ShoppingCart },
       { label: "Entrada XML", to: "/estoque/entrada", icon: PackagePlus },
+    ],
+  },
+  {
+    label: "Cadastros",
+    items: [
+      { label: "Referencias", to: "/referencias", icon: ClipboardList },
+      { label: "Fabricantes", to: "/fabricantes", icon: Building2 },
+      { label: "Marcas", to: "/marcas", icon: Tags },
+      { label: "Fornecedores", to: "/fornecedores", icon: Store },
+      { label: "Clientes", to: "/clientes", icon: Users },
+      { label: "Colaboradores", to: "/colaboradores", icon: UserCog },
     ],
   },
   {

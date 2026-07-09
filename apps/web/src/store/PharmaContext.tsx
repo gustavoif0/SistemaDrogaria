@@ -11,6 +11,7 @@ import {
   currentUser,
   initialCategories,
   initialFinanceMovements,
+  initialMasterData,
   initialPreSales,
   initialProducts,
   initialSales,
@@ -19,6 +20,9 @@ import {
 } from "../mocks/mockData";
 import type {
   FinanceMovement,
+  MasterDataCollections,
+  MasterDataKind,
+  MasterDataRecord,
   PaymentMethod,
   PreSale,
   PreSaleItem,
@@ -60,12 +64,15 @@ type CategoryDraft = Omit<ProductCategory, "id">;
 
 type SubcategoryDraft = Omit<ProductSubcategory, "id">;
 
+type MasterDataDraft = Omit<MasterDataRecord, "id">;
+
 interface PharmaContextValue {
   company: typeof company;
   currentUser: typeof currentUser;
   products: Product[];
   categories: ProductCategory[];
   subcategories: ProductSubcategory[];
+  masterData: MasterDataCollections;
   preSales: PreSale[];
   sales: Sale[];
   financeMovements: FinanceMovement[];
@@ -77,6 +84,12 @@ interface PharmaContextValue {
   updateCategory: (categoryId: string, changes: Partial<ProductCategory>) => void;
   addSubcategory: (draft: SubcategoryDraft) => ProductSubcategory;
   updateSubcategory: (subcategoryId: string, changes: Partial<ProductSubcategory>) => void;
+  addMasterDataRecord: (kind: MasterDataKind, draft: MasterDataDraft) => MasterDataRecord;
+  updateMasterDataRecord: (
+    kind: MasterDataKind,
+    recordId: string,
+    changes: Partial<MasterDataRecord>,
+  ) => void;
   sendPreSaleToCashier: (customerName: string, items: PreSaleItem[]) => PreSale;
   finalizeSale: (
     preSaleId: string,
@@ -101,6 +114,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<ProductCategory[]>(initialCategories);
   const [subcategories, setSubcategories] =
     useState<ProductSubcategory[]>(initialSubcategories);
+  const [masterData, setMasterData] = useState<MasterDataCollections>(initialMasterData);
   const [preSales, setPreSales] = useState<PreSale[]>(initialPreSales);
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [financeMovements, setFinanceMovements] = useState<FinanceMovement[]>(
@@ -234,6 +248,43 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const addMasterDataRecord = useCallback((kind: MasterDataKind, draft: MasterDataDraft) => {
+    const record: MasterDataRecord = {
+      ...draft,
+      id: makeId(kind.slice(0, 3)),
+      code: draft.code.trim() || makeNumber(kind.slice(0, 3).toUpperCase(), 4),
+      name: draft.name.trim(),
+      document: draft.document.trim(),
+      contactName: draft.contactName.trim(),
+      phone: draft.phone.trim(),
+      email: draft.email.trim(),
+      city: draft.city.trim(),
+      state: draft.state.trim().toUpperCase(),
+      role: draft.role.trim(),
+      notes: draft.notes.trim(),
+      status: draft.status,
+    };
+
+    setMasterData((current) => ({
+      ...current,
+      [kind]: [record, ...current[kind]],
+    }));
+
+    return record;
+  }, []);
+
+  const updateMasterDataRecord = useCallback(
+    (kind: MasterDataKind, recordId: string, changes: Partial<MasterDataRecord>) => {
+      setMasterData((current) => ({
+        ...current,
+        [kind]: current[kind].map((record) =>
+          record.id === recordId ? { ...record, ...changes } : record,
+        ),
+      }));
+    },
+    [],
+  );
+
   const sendPreSaleToCashier = useCallback(
     (customerName: string, items: PreSaleItem[]) => {
       const totals = summarizeItems(items);
@@ -355,6 +406,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       products,
       categories,
       subcategories,
+      masterData,
       preSales,
       sales,
       financeMovements,
@@ -366,6 +418,8 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       updateCategory,
       addSubcategory,
       updateSubcategory,
+      addMasterDataRecord,
+      updateMasterDataRecord,
       sendPreSaleToCashier,
       finalizeSale,
       getProductById,
@@ -374,15 +428,18 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       addProduct,
       addCategory,
       addSubcategory,
+      addMasterDataRecord,
       categories,
       financeMovements,
       finalizeSale,
       getProductById,
+      masterData,
       preSales,
       products,
       sales,
       subcategories,
       updateCategory,
+      updateMasterDataRecord,
       updateProduct,
       updateSubcategory,
     ],

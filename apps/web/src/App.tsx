@@ -3,6 +3,14 @@ import { AppShell } from "./components/layout/AppShell";
 import { CounterPage } from "./modules/counter/CounterPage";
 import { DashboardPage } from "./modules/dashboard/DashboardPage";
 import { FinancePage } from "./modules/finance/FinancePage";
+import {
+  BrandsPage,
+  CustomersPage,
+  EmployeesPage,
+  ManufacturersPage,
+  ReferencesPage,
+  SuppliersPage,
+} from "./modules/master-data/MasterDataPage";
 import { PdvPage } from "./modules/pdv/PdvPage";
 import { CategoriesPage } from "./modules/products/CategoriesPage";
 import { ProductsPage } from "./modules/products/ProductsPage";
@@ -20,6 +28,12 @@ export function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/produtos" element={<ProductsPage />} />
         <Route path="/categorias" element={<CategoriesPage />} />
+        <Route path="/referencias" element={<ReferencesPage />} />
+        <Route path="/fabricantes" element={<ManufacturersPage />} />
+        <Route path="/marcas" element={<BrandsPage />} />
+        <Route path="/fornecedores" element={<SuppliersPage />} />
+        <Route path="/clientes" element={<CustomersPage />} />
+        <Route path="/colaboradores" element={<EmployeesPage />} />
         <Route path="/balcao" element={<CounterPage />} />
         <Route path="/pdv" element={<PdvPage />} />
         <Route path="/estoque/entrada" element={<StockEntryPage />} />

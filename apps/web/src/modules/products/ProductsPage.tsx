@@ -9,7 +9,7 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { Tabs } from "../../components/ui/Tabs";
 import { formatCurrency, percent } from "../../lib/format";
 import { usePharma } from "../../store/PharmaContext";
-import type { Product, ProductSaleCondition, ProductSaleConditionMode } from "../../types/domain";
+import type { Product, ProductSaleCondition, ProductSaleConditionMode, ProductStatus } from "../../types/domain";
 
 interface SaleConditionFormState {
   id: string;
@@ -44,6 +44,7 @@ interface ProductFormState {
   stock: string;
   minStock: string;
   maxDiscountPercent: string;
+  status: ProductStatus;
   controlsBatch: boolean;
   controlsExpiry: boolean;
   allowFractional: boolean;
@@ -89,6 +90,7 @@ const emptyForm: ProductFormState = {
   stock: "",
   minStock: "",
   maxDiscountPercent: "10",
+  status: "active",
   controlsBatch: true,
   controlsExpiry: true,
   allowFractional: false,
@@ -119,6 +121,7 @@ const fieldLabels: Record<keyof ProductFormState, string> = {
   stock: "Estoque atual",
   minStock: "Estoque minimo",
   maxDiscountPercent: "Desconto maximo",
+  status: "Status",
   controlsBatch: "Controla lote",
   controlsExpiry: "Controla vencimento",
   allowFractional: "Venda fracionada",
@@ -127,6 +130,10 @@ const fieldLabels: Record<keyof ProductFormState, string> = {
 
 function boolText(value: boolean) {
   return value ? "Sim" : "Nao";
+}
+
+function productStatusText(status: ProductStatus) {
+  return status === "active" ? "Ativo" : "Inativo";
 }
 
 function numberText(value: number) {
@@ -303,6 +310,7 @@ function productToForm(product: Product): ProductFormState {
     stock: numberText(product.stock),
     minStock: numberText(product.minStock),
     maxDiscountPercent: numberText(product.maxDiscountPercent),
+    status: product.status,
     controlsBatch: product.controlsBatch,
     controlsExpiry: product.controlsExpiry,
     allowFractional: product.allowFractional,
@@ -342,6 +350,7 @@ function formToProductChanges(form: ProductFormState): Partial<Product> {
     stock: toNumber(form.stock),
     minStock: toNumber(form.minStock),
     maxDiscountPercent: toNumber(form.maxDiscountPercent),
+    status: form.status,
     controlsBatch: form.controlsBatch,
     controlsExpiry: form.controlsExpiry,
     allowFractional: form.allowFractional,
@@ -379,6 +388,7 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
     { key: "supplier", before: product.supplier, after: form.supplier.trim() },
     { key: "ncm", before: product.ncm, after: form.ncm.trim() },
     { key: "ncmDescription", before: product.ncmDescription, after: form.ncmDescription.trim() },
+    { key: "status", before: productStatusText(product.status), after: productStatusText(form.status) },
   ];
 
   const numericComparisons: Array<{
@@ -901,6 +911,7 @@ export function ProductsPage() {
       stock: toNumber(form.stock),
       minStock: toNumber(form.minStock),
       maxDiscountPercent: toNumber(form.maxDiscountPercent),
+      status: form.status,
       controlsBatch: form.controlsBatch,
       controlsExpiry: form.controlsExpiry,
       allowFractional: form.allowFractional,
@@ -1371,6 +1382,16 @@ export function ProductsPage() {
                     <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                       Produtos SNGPC exigem receita no fluxo do balcao. Integracao real fica fora do MVP.
                     </div>
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={form.status === "inactive"}
+                        onChange={(event) =>
+                          updateForm("status", event.target.checked ? "inactive" : "active")
+                        }
+                      />
+                      Produto inativo
+                    </label>
                     {[
                       ["controlsBatch", "Controla lote"],
                       ["controlsExpiry", "Controla vencimento"],
@@ -1759,6 +1780,16 @@ export function ProductsPage() {
                         Alteracoes em preco, desconto e estoque passam a valer imediatamente nos fluxos
                         mockados de Balcao e PDV.
                       </div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={editForm.status === "inactive"}
+                          onChange={(event) =>
+                            updateEditForm("status", event.target.checked ? "inactive" : "active")
+                          }
+                        />
+                        Produto inativo
+                      </label>
                       {[
                         ["controlsBatch", "Controla lote"],
                         ["controlsExpiry", "Controla vencimento"],

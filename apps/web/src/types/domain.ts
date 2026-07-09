@@ -109,6 +109,31 @@ export interface ProductSubcategory {
   requiresPharmacistReview: boolean;
 }
 
+export type MasterDataKind =
+  | "references"
+  | "manufacturers"
+  | "brands"
+  | "suppliers"
+  | "customers"
+  | "employees";
+
+export interface MasterDataRecord {
+  id: string;
+  code: string;
+  name: string;
+  document: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  city: string;
+  state: string;
+  role: string;
+  notes: string;
+  status: ProductStatus;
+}
+
+export type MasterDataCollections = Record<MasterDataKind, MasterDataRecord[]>;
+
 export interface PreSaleItem {
   id: string;
   productId: string;
