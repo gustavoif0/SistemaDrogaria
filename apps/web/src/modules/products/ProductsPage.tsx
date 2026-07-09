@@ -27,6 +27,7 @@ interface ProductFormState {
   activeIngredient: string;
   reference: string;
   content: string;
+  type: string;
   category: string;
   subcategory: string;
   manufacturer: string;
@@ -71,6 +72,7 @@ const emptyForm: ProductFormState = {
   activeIngredient: "",
   reference: "",
   content: "",
+  type: "Referência",
   category: "Medicamentos",
   subcategory: "Analgesicos",
   manufacturer: "",
@@ -100,6 +102,7 @@ const fieldLabels: Record<keyof ProductFormState, string> = {
   activeIngredient: "Principio ativo + posologia",
   reference: "Referencia",
   content: "Conteudo",
+  type: "Tipo",
   category: "Categoria",
   subcategory: "Subcategoria",
   manufacturer: "Fabricante",
@@ -230,6 +233,39 @@ function PercentInput({ className = "", ...props }: InputHTMLAttributes<HTMLInpu
   );
 }
 
+const medicationTypeOptions = ["Referência", "Similar", "Genérico"] as const;
+const defaultMedicationType = medicationTypeOptions[0];
+
+function normalizeCategoryName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isMedicationCategory(categoryName: string) {
+  const normalized = normalizeCategoryName(categoryName);
+
+  return normalized === "medicamento" || normalized === "medicamentos";
+}
+
+function normalizeMedicationType(type: string) {
+  return medicationTypeOptions.includes(type as (typeof medicationTypeOptions)[number])
+    ? type
+    : defaultMedicationType;
+}
+
+function getProductTypeForForm(categoryName: string, type: string) {
+  return isMedicationCategory(categoryName) ? normalizeMedicationType(type) : type;
+}
+
+function getProductTypeFromForm(form: ProductFormState) {
+  if (isMedicationCategory(form.category)) return normalizeMedicationType(form.type);
+
+  return form.type.trim() || form.category.trim();
+}
+
 function productToForm(product: Product): ProductFormState {
   return {
     internalCode: product.internalCode,
@@ -238,6 +274,7 @@ function productToForm(product: Product): ProductFormState {
     activeIngredient: product.activeIngredient,
     reference: product.reference,
     content: product.content,
+    type: getProductTypeForForm(product.category, product.type),
     category: product.category,
     subcategory: product.subcategory,
     manufacturer: product.manufacturer,
@@ -287,6 +324,7 @@ function formToProductChanges(form: ProductFormState): Partial<Product> {
     reference: form.reference.trim(),
     content: form.content.trim(),
     presentation: form.content.trim(),
+    type: getProductTypeFromForm(form),
     category: form.category.trim(),
     subcategory: form.subcategory.trim(),
     manufacturer: form.manufacturer.trim(),
@@ -325,6 +363,15 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
     { key: "activeIngredient", before: product.activeIngredient, after: form.activeIngredient.trim() },
     { key: "reference", before: product.reference, after: form.reference.trim() },
     { key: "content", before: product.content, after: form.content.trim() },
+    ...(isMedicationCategory(product.category) || isMedicationCategory(form.category)
+      ? [
+          {
+            key: "type" as keyof ProductFormState,
+            before: getProductTypeForForm(product.category, product.type),
+            after: getProductTypeFromForm(form),
+          },
+        ]
+      : []),
     { key: "category", before: product.category, after: form.category.trim() },
     { key: "subcategory", before: product.subcategory, after: form.subcategory.trim() },
     { key: "manufacturer", before: product.manufacturer, after: form.manufacturer.trim() },
@@ -747,12 +794,22 @@ export function ProductsPage() {
 
   function updateFormCategory(categoryName: string) {
     const firstSubcategory = getSubcategoriesForCategory(categoryName)[0]?.name ?? "";
-    setForm((current) => ({ ...current, category: categoryName, subcategory: firstSubcategory }));
+    setForm((current) => ({
+      ...current,
+      category: categoryName,
+      subcategory: firstSubcategory,
+      type: isMedicationCategory(categoryName) ? normalizeMedicationType(current.type) : categoryName,
+    }));
   }
 
   function updateEditFormCategory(categoryName: string) {
     const firstSubcategory = getSubcategoriesForCategory(categoryName)[0]?.name ?? "";
-    setEditForm((current) => ({ ...current, category: categoryName, subcategory: firstSubcategory }));
+    setEditForm((current) => ({
+      ...current,
+      category: categoryName,
+      subcategory: firstSubcategory,
+      type: isMedicationCategory(categoryName) ? normalizeMedicationType(current.type) : categoryName,
+    }));
   }
 
   function getContextMenuPosition(position: { x: number; y: number }) {
@@ -827,6 +884,7 @@ export function ProductsPage() {
       activeIngredient: form.activeIngredient,
       reference: form.reference,
       content: form.content,
+      type: getProductTypeFromForm(form),
       category: form.category,
       subcategory: form.subcategory,
       manufacturer: form.manufacturer,
@@ -1090,6 +1148,22 @@ export function ProductsPage() {
                         ))}
                       </select>
                     </FormField>
+                    {isMedicationCategory(form.category) ? (
+                      <FormField label="Tipo">
+                        <select
+                          required
+                          className={inputClassName}
+                          value={form.type}
+                          onChange={(event) => updateForm("type", event.target.value)}
+                        >
+                          {medicationTypeOptions.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                    ) : null}
                     <FormField label="NCM">
                       <input
                         required
@@ -1470,6 +1544,21 @@ export function ProductsPage() {
                           ))}
                         </select>
                       </FormField>
+                      {isMedicationCategory(editForm.category) ? (
+                        <FormField label="Tipo">
+                          <select
+                            className={inputClassName}
+                            value={editForm.type}
+                            onChange={(event) => updateEditForm("type", event.target.value)}
+                          >
+                            {medicationTypeOptions.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+                        </FormField>
+                      ) : null}
                       <FormField label="NCM">
                         <input
                           className={inputClassName}
