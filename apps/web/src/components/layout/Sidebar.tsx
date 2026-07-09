@@ -66,8 +66,8 @@ const groups = [
 
 export function Sidebar() {
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 bg-slate-950 text-white lg:flex lg:flex-col">
-      <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden min-h-0 w-72 border-r border-slate-200 bg-slate-950 text-white lg:flex lg:flex-col">
+      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5">
         <span className="flex h-10 w-10 items-center justify-center rounded-md bg-pharma-500">
           <Store className="h-5 w-5" aria-hidden="true" />
         </span>
@@ -77,7 +77,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 erp-scrollbar">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4 erp-scrollbar">
         {groups.map((group) => (
           <div key={group.label} className="mb-5">
             <p className="mb-2 px-3 text-xs font-semibold uppercase text-slate-400">{group.label}</p>
@@ -104,7 +104,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="shrink-0 border-t border-white/10 p-4">
         <div className="rounded-md border border-white/10 bg-white/5 p-3">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <Gauge className="h-4 w-4 text-pharma-100" aria-hidden="true" />
