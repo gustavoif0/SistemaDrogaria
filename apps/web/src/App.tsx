@@ -15,6 +15,7 @@ import { PdvPage } from "./modules/pdv/PdvPage";
 import { CategoriesPage } from "./modules/products/CategoriesPage";
 import { ProductsPage } from "./modules/products/ProductsPage";
 import { ReportsPage } from "./modules/reports/ReportsPage";
+import { RolesPage } from "./modules/security/RolesPage";
 import { ModulePlaceholder } from "./modules/settings/ModulePlaceholder";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import { SngpcPage } from "./modules/sngpc/SngpcPage";
@@ -34,6 +35,7 @@ export function App() {
         <Route path="/fornecedores" element={<SuppliersPage />} />
         <Route path="/clientes" element={<CustomersPage />} />
         <Route path="/colaboradores" element={<EmployeesPage />} />
+        <Route path="/cargos" element={<RolesPage />} />
         <Route path="/balcao" element={<CounterPage />} />
         <Route path="/pdv" element={<PdvPage />} />
         <Route path="/estoque/entrada" element={<StockEntryPage />} />

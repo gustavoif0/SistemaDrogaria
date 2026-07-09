@@ -28,6 +28,8 @@ type MasterDataFormState = Omit<MasterDataRecord, "id">;
 type TextFieldKey = Exclude<keyof MasterDataFormState, "status">;
 type StatusFilter = ProductStatus | "all";
 
+const collaboratorIdPattern = /^[A-Za-z]+(?:\.[A-Za-z]+)*$/;
+
 interface MasterDataField {
   key: TextFieldKey;
   label: string;
@@ -52,6 +54,7 @@ interface MasterDataConfig {
 
 const emptyForm: MasterDataFormState = {
   code: "",
+  collaboratorId: "",
   name: "",
   document: "",
   contactName: "",
@@ -181,6 +184,12 @@ const configs: Record<MasterDataKind, MasterDataConfig> = {
     contactLabel: "Contato",
     fields: [
       { key: "code", label: "Codigo", placeholder: "COL-001" },
+      {
+        key: "collaboratorId",
+        label: "ID colaborador",
+        placeholder: "gustavo.ferreira",
+        required: true,
+      },
       { key: "name", label: "Nome do colaborador", required: true },
       { key: "document", label: "CPF" },
       { key: "role", label: "Cargo" },
@@ -204,6 +213,7 @@ function optionalText(value: string) {
 function normalizeForm(form: MasterDataFormState): MasterDataFormState {
   return {
     code: form.code.trim(),
+    collaboratorId: form.collaboratorId.trim().toLowerCase(),
     name: form.name.trim(),
     document: form.document.trim(),
     contactName: form.contactName.trim(),
@@ -220,6 +230,7 @@ function normalizeForm(form: MasterDataFormState): MasterDataFormState {
 function buildSearchText(record: MasterDataRecord) {
   return [
     record.code,
+    record.collaboratorId,
     record.name,
     record.document,
     record.contactName,
@@ -242,6 +253,7 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MasterDataRecord | null>(null);
   const [form, setForm] = useState<MasterDataFormState>(emptyForm);
+  const [collaboratorIdError, setCollaboratorIdError] = useState("");
 
   const filteredRecords = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -258,12 +270,17 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
   const inactiveCount = records.length - activeCount;
 
   function updateForm<K extends keyof MasterDataFormState>(key: K, value: MasterDataFormState[K]) {
+    if (key === "collaboratorId") {
+      setCollaboratorIdError("");
+    }
+
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   function openNewRecord() {
     setEditingRecord(null);
     setForm(emptyForm);
+    setCollaboratorIdError("");
     setModalOpen(true);
   }
 
@@ -271,6 +288,7 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
     setEditingRecord(record);
     setForm({
       code: record.code,
+      collaboratorId: record.collaboratorId,
       name: record.name,
       document: record.document,
       contactName: record.contactName,
@@ -282,6 +300,7 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
       notes: record.notes,
       status: record.status,
     });
+    setCollaboratorIdError("");
     setModalOpen(true);
   }
 
@@ -289,6 +308,7 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
     setModalOpen(false);
     setEditingRecord(null);
     setForm(emptyForm);
+    setCollaboratorIdError("");
   }
 
   function handleSubmit(event: FormEvent) {
@@ -296,6 +316,10 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
 
     const payload = normalizeForm(form);
     if (!payload.name) return;
+    if (config.kind === "employees" && !collaboratorIdPattern.test(payload.collaboratorId)) {
+      setCollaboratorIdError("Use apenas letras e ponto, ex: gustavo.ferreira.");
+      return;
+    }
 
     if (editingRecord) {
       updateMasterDataRecord(config.kind, editingRecord.id, payload);
@@ -378,6 +402,16 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
               header: "Codigo",
               render: (record) => <span className="font-medium text-slate-900">{optionalText(record.code)}</span>,
             },
+            ...(config.kind === "employees"
+              ? [
+                  {
+                    header: "ID Colaborador",
+                    render: (record: MasterDataRecord) => (
+                      <span className="font-medium text-slate-900">{optionalText(record.collaboratorId)}</span>
+                    ),
+                  },
+                ]
+              : []),
             {
               header: config.singular,
               render: (record) => (
@@ -444,7 +478,17 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
           {config.fields.map((field) => (
             <div key={field.key} className={field.span === "full" ? "md:col-span-2" : undefined}>
               <FormField label={field.label}>
-                {field.key === "notes" ? (
+                {field.key === "collaboratorId" && config.kind === "employees" ? (
+                  <input
+                    className={inputClassName}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    value={form[field.key]}
+                    onChange={(event) => updateForm(field.key, event.target.value.toLowerCase())}
+                    pattern="[A-Za-z]+(\.[A-Za-z]+)*"
+                    title="Use apenas letras e ponto, ex: gustavo.ferreira"
+                  />
+                ) : field.key === "notes" ? (
                   <textarea
                     className={textareaClassName}
                     placeholder={field.placeholder}
@@ -461,6 +505,9 @@ function MasterDataPage({ config }: { config: MasterDataConfig }) {
                     onChange={(event) => updateForm(field.key, event.target.value)}
                   />
                 )}
+                {field.key === "collaboratorId" && config.kind === "employees" && collaboratorIdError ? (
+                  <span className="mt-1 block text-xs text-red-600">{collaboratorIdError}</span>
+                ) : null}
               </FormField>
             </div>
           ))}

@@ -107,6 +107,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "ref-dip500",
       code: "DIP500",
+      collaboratorId: "",
       name: "Dipirona Sodica 500mg",
       document: "",
       contactName: "Medicamento de referencia interna",
@@ -121,6 +122,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "ref-los50",
       code: "LOS50",
+      collaboratorId: "",
       name: "Losartana Potassica 50mg",
       document: "",
       contactName: "Referencia cardiologia",
@@ -137,6 +139,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "fab-neo-quimica",
       code: "FAB-001",
+      collaboratorId: "",
       name: "Neo Quimica",
       document: "29.785.870/0001-03",
       contactName: "Atendimento comercial",
@@ -151,6 +154,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "fab-ems",
       code: "FAB-002",
+      collaboratorId: "",
       name: "EMS",
       document: "57.507.378/0001-01",
       contactName: "Representante regional",
@@ -167,6 +171,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "marca-neo-quimica",
       code: "MAR-001",
+      collaboratorId: "",
       name: "Neo Quimica",
       document: "",
       contactName: "Grupo Hypera",
@@ -181,6 +186,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "marca-needs",
       code: "MAR-002",
+      collaboratorId: "",
       name: "Needs",
       document: "",
       contactName: "Linha dermocosmetica",
@@ -197,6 +203,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "forn-norte-farma",
       code: "FOR-001",
+      collaboratorId: "",
       name: "Distribuidora Norte Farma",
       document: "04.112.223/0001-90",
       contactName: "Marcos Lima",
@@ -211,6 +218,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "forn-farma-brasil",
       code: "FOR-002",
+      collaboratorId: "",
       name: "Farma Brasil Atacado",
       document: "18.556.778/0001-44",
       contactName: "Carla Teixeira",
@@ -227,6 +235,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "cli-consumidor-final",
       code: "CLI-001",
+      collaboratorId: "",
       name: "Consumidor final",
       document: "",
       contactName: "",
@@ -241,6 +250,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "cli-ana-souza",
       code: "CLI-002",
+      collaboratorId: "",
       name: "Ana Souza",
       document: "123.456.789-00",
       contactName: "",
@@ -257,6 +267,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "col-gustavo-ferreira",
       code: "COL-001",
+      collaboratorId: "gustavo.ferreira",
       name: "Gustavo Ferreira",
       document: "321.654.987-00",
       contactName: "",
@@ -271,6 +282,7 @@ export const initialMasterData: MasterDataCollections = {
     {
       id: "col-julia-almeida",
       code: "COL-002",
+      collaboratorId: "julia.almeida",
       name: "Julia Almeida",
       document: "987.654.321-00",
       contactName: "",

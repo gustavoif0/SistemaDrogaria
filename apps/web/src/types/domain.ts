@@ -120,6 +120,7 @@ export type MasterDataKind =
 export interface MasterDataRecord {
   id: string;
   code: string;
+  collaboratorId: string;
   name: string;
   document: string;
   contactName: string;

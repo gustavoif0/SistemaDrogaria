@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BriefcaseBusiness,
   Building2,
   ClipboardList,
   CreditCard,
@@ -41,6 +42,7 @@ const groups = [
       { label: "Marcas", to: "/marcas", icon: Tags },
       { label: "Fornecedores", to: "/fornecedores", icon: Store },
       { label: "Clientes", to: "/clientes", icon: Users },
+      { label: "Cargos", to: "/cargos", icon: BriefcaseBusiness },
       { label: "Colaboradores", to: "/colaboradores", icon: UserCog },
     ],
   },

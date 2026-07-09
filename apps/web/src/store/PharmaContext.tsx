@@ -253,6 +253,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       ...draft,
       id: makeId(kind.slice(0, 3)),
       code: draft.code.trim() || makeNumber(kind.slice(0, 3).toUpperCase(), 4),
+      collaboratorId: draft.collaboratorId.trim(),
       name: draft.name.trim(),
       document: draft.document.trim(),
       contactName: draft.contactName.trim(),
