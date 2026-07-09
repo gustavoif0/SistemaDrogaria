@@ -40,6 +40,8 @@ export interface ProductSaleCondition {
   id: string;
   label: string;
   salePrice: number;
+  expectedProfitPercent: number;
+  expectedProfit: number;
   quantity: number;
   mode: ProductSaleConditionMode;
 }

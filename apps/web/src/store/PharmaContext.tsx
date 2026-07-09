@@ -115,7 +115,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
   const addProduct = useCallback((draft: ProductDraft) => {
     const expectedProfit =
       draft.expectedProfit ??
-      Number((draft.cost + draft.cost * (draft.expectedProfitPercent / 100)).toFixed(2));
+      Number((draft.cost * (draft.expectedProfitPercent / 100)).toFixed(2));
     const product: Product = {
       id: makeId("prod"),
       internalCode: draft.internalCode.trim() || makeNumber("MED", 4),

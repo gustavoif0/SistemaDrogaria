@@ -14,6 +14,8 @@ import type { Product, ProductSaleCondition, ProductSaleConditionMode } from "..
 interface SaleConditionFormState {
   id: string;
   salePrice: string;
+  expectedProfitPercent: string;
+  expectedProfit: string;
   quantity: string;
   mode: ProductSaleConditionMode;
 }
@@ -140,13 +142,17 @@ function decimalText(value: number) {
 }
 
 function calculateExpectedProfitValue(cost: number, expectedProfitPercent: number) {
-  return Number((cost + cost * (expectedProfitPercent / 100)).toFixed(2));
+  return Number((cost * (expectedProfitPercent / 100)).toFixed(2));
+}
+
+function calculateSalePriceValue(cost: number, expectedProfit: number) {
+  return Number((cost + expectedProfit).toFixed(2));
 }
 
 function calculateExpectedProfitPercent(cost: number, expectedProfit: number) {
   if (cost <= 0) return 0;
 
-  return Number((((Math.max(expectedProfit, cost) - cost) / cost) * 100).toFixed(2));
+  return Number(((expectedProfit / cost) * 100).toFixed(2));
 }
 
 function makeSaleConditionId() {
@@ -162,6 +168,8 @@ function normalizeSaleConditions(conditions: SaleConditionFormState[]): ProductS
     id: condition.id,
     label: `Valor Venda ${index + 2}`,
     salePrice: toNumber(condition.salePrice),
+    expectedProfitPercent: toNumber(condition.expectedProfitPercent),
+    expectedProfit: toNumber(condition.expectedProfit),
     quantity: Math.max(2, toNumber(condition.quantity)),
     mode: condition.mode,
   }));
@@ -173,7 +181,9 @@ function saleConditionsToText(conditions: ProductSaleCondition[]) {
   return conditions
     .map(
       (condition) =>
-        `${condition.label}: ${formatCurrency(condition.salePrice)} ${saleConditionModeLabel(
+        `${condition.label}: ${formatCurrency(condition.salePrice)}, ${percent(
+          condition.expectedProfitPercent,
+        )}, lucro ${formatCurrency(condition.expectedProfit)} ${saleConditionModeLabel(
           condition.mode,
         )} ${condition.quantity} unidade(s)`,
     )
@@ -237,6 +247,13 @@ function productToForm(product: Product): ProductFormState {
     saleConditions: (product.saleConditions ?? []).map((condition) => ({
       id: condition.id,
       salePrice: numberText(condition.salePrice),
+      expectedProfitPercent: numberText(
+        condition.expectedProfitPercent ?? calculateExpectedProfitPercent(
+          product.cost,
+          Math.max(0, condition.salePrice - product.cost),
+        ),
+      ),
+      expectedProfit: numberText(condition.expectedProfit ?? Math.max(0, condition.salePrice - product.cost)),
       quantity: numberText(condition.quantity),
       mode: condition.mode,
     })),
@@ -453,6 +470,7 @@ export function ProductsPage() {
     const nextCost = key === "cost" || costFollowsPurchase ? value : currentCost;
     const expectedProfitPercent = toNumber(current.expectedProfitPercent);
     const expectedProfit = calculateExpectedProfitValue(nextCost, expectedProfitPercent);
+    const salePrice = calculateSalePriceValue(nextCost, expectedProfit);
 
     return {
       ...current,
@@ -461,7 +479,26 @@ export function ProductsPage() {
       ...(key === "cost" ? { cost: valueText } : {}),
       expectedProfitPercent: decimalText(expectedProfitPercent),
       expectedProfit: decimalText(expectedProfit),
-      salePrice: decimalText(expectedProfit),
+      salePrice: decimalText(salePrice),
+      saleConditions: current.saleConditions.map((condition) =>
+        resolveSaleConditionCostChange(condition, nextCost),
+      ),
+    };
+  }
+
+  function resolveSaleConditionCostChange(
+    condition: SaleConditionFormState,
+    cost: number,
+  ): SaleConditionFormState {
+    const expectedProfitPercent = toNumber(condition.expectedProfitPercent);
+    const expectedProfit = calculateExpectedProfitValue(cost, expectedProfitPercent);
+    const salePrice = calculateSalePriceValue(cost, expectedProfit);
+
+    return {
+      ...condition,
+      expectedProfitPercent: decimalText(expectedProfitPercent),
+      expectedProfit: decimalText(expectedProfit),
+      salePrice: decimalText(salePrice),
     };
   }
 
@@ -477,24 +514,63 @@ export function ProductsPage() {
     if (key === "expectedProfitPercent") {
       const expectedProfitPercent = value;
       const expectedProfit = calculateExpectedProfitValue(cost, expectedProfitPercent);
+      const salePrice = calculateSalePriceValue(cost, expectedProfit);
 
       return {
         ...current,
         expectedProfitPercent: valueText,
         expectedProfit: decimalText(expectedProfit),
-        salePrice: decimalText(expectedProfit),
+        salePrice: decimalText(salePrice),
       };
     }
 
-    const expectedProfit = cost > 0 ? Math.max(value, cost) : value;
+    const salePrice = key === "salePrice" && cost > 0 ? Math.max(value, cost) : value;
+    const expectedProfit = key === "salePrice" ? Math.max(0, salePrice - cost) : value;
     const expectedProfitPercent = calculateExpectedProfitPercent(cost, expectedProfit);
+    const nextSalePrice = key === "salePrice" ? salePrice : calculateSalePriceValue(cost, expectedProfit);
 
     return {
       ...current,
-      [key]: decimalText(expectedProfit),
+      [key]: key === "salePrice" ? decimalText(nextSalePrice) : decimalText(expectedProfit),
       expectedProfitPercent: decimalText(expectedProfitPercent),
       expectedProfit: decimalText(expectedProfit),
-      salePrice: decimalText(expectedProfit),
+      salePrice: decimalText(nextSalePrice),
+    };
+  }
+
+  function resolveSaleConditionPricingChange(
+    condition: SaleConditionFormState,
+    cost: number,
+    key: "salePrice" | "expectedProfitPercent" | "expectedProfit",
+    rawValue: string,
+  ): SaleConditionFormState {
+    const valueText = numberInputText(rawValue);
+    const value = toNumber(valueText);
+
+    if (key === "expectedProfitPercent") {
+      const expectedProfitPercent = value;
+      const expectedProfit = calculateExpectedProfitValue(cost, expectedProfitPercent);
+      const salePrice = calculateSalePriceValue(cost, expectedProfit);
+
+      return {
+        ...condition,
+        expectedProfitPercent: valueText,
+        expectedProfit: decimalText(expectedProfit),
+        salePrice: decimalText(salePrice),
+      };
+    }
+
+    const salePrice = key === "salePrice" && cost > 0 ? Math.max(value, cost) : value;
+    const expectedProfit = key === "salePrice" ? Math.max(0, salePrice - cost) : value;
+    const expectedProfitPercent = calculateExpectedProfitPercent(cost, expectedProfit);
+    const nextSalePrice = key === "salePrice" ? salePrice : calculateSalePriceValue(cost, expectedProfit);
+
+    return {
+      ...condition,
+      [key]: key === "salePrice" ? decimalText(nextSalePrice) : decimalText(expectedProfit),
+      expectedProfitPercent: decimalText(expectedProfitPercent),
+      expectedProfit: decimalText(expectedProfit),
+      salePrice: decimalText(nextSalePrice),
     };
   }
 
@@ -520,12 +596,49 @@ export function ProductsPage() {
     setEditForm((current) => resolvePricingChange(current, key, value));
   }
 
+  function updateSaleConditionPricing(
+    conditionId: string,
+    key: "salePrice" | "expectedProfitPercent" | "expectedProfit",
+    value: string,
+  ) {
+    setForm((current) => ({
+      ...current,
+      saleConditions: current.saleConditions.map((condition) =>
+        condition.id === conditionId
+          ? resolveSaleConditionPricingChange(condition, toNumber(current.cost), key, value)
+          : condition,
+      ),
+    }));
+  }
+
+  function updateEditSaleConditionPricing(
+    conditionId: string,
+    key: "salePrice" | "expectedProfitPercent" | "expectedProfit",
+    value: string,
+  ) {
+    setEditForm((current) => ({
+      ...current,
+      saleConditions: current.saleConditions.map((condition) =>
+        condition.id === conditionId
+          ? resolveSaleConditionPricingChange(condition, toNumber(current.cost), key, value)
+          : condition,
+      ),
+    }));
+  }
+
   function addSaleCondition() {
     setForm((current) => ({
       ...current,
       saleConditions: [
         ...current.saleConditions,
-        { id: makeSaleConditionId(), salePrice: "", quantity: "1", mode: "from_quantity" },
+        {
+          id: makeSaleConditionId(),
+          salePrice: current.salePrice,
+          expectedProfitPercent: current.expectedProfitPercent,
+          expectedProfit: current.expectedProfit,
+          quantity: "2",
+          mode: "from_quantity",
+        },
       ],
     }));
   }
@@ -535,7 +648,14 @@ export function ProductsPage() {
       ...current,
       saleConditions: [
         ...current.saleConditions,
-        { id: makeSaleConditionId(), salePrice: "", quantity: "1", mode: "from_quantity" },
+        {
+          id: makeSaleConditionId(),
+          salePrice: current.salePrice,
+          expectedProfitPercent: current.expectedProfitPercent,
+          expectedProfit: current.expectedProfit,
+          quantity: "2",
+          mode: "from_quantity",
+        },
       ],
     }));
   }
@@ -785,6 +905,7 @@ export function ProductsPage() {
         description="Cadastro simplificado para a primeira versao funcional."
         open={formOpen}
         onClose={() => setFormOpen(false)}
+        wide
         footer={
           <div className="flex justify-end gap-2">
             <ActionButton onClick={() => setFormOpen(false)}>Cancelar</ActionButton>
@@ -1001,16 +1122,23 @@ export function ProductsPage() {
                           {form.saleConditions.map((condition, index) => (
                             <div
                               key={condition.id}
-                              className="grid gap-3 rounded-md border border-slate-200 bg-white p-3 md:grid-cols-[1fr_140px_170px_auto]"
+                              className="grid gap-3 rounded-md border border-slate-200 bg-white p-3 md:grid-cols-[170px_130px_1fr_160px_1fr_auto]"
                             >
-                              <FormField label={`Valor Venda ${index + 2}`}>
-                                <MoneyInput
-                                  required
-                                  value={condition.salePrice}
+                              <FormField label="Regra">
+                                <select
+                                  className={inputClassName}
+                                  value={condition.mode}
                                   onChange={(event) =>
-                                    updateSaleCondition(condition.id, "salePrice", numberInputText(event.target.value))
+                                    updateSaleCondition(
+                                      condition.id,
+                                      "mode",
+                                      event.target.value as ProductSaleConditionMode,
+                                    )
                                   }
-                                />
+                                >
+                                  <option value="from_quantity">A partir de</option>
+                                  <option value="every_quantity">A cada</option>
+                                </select>
                               </FormField>
                               <FormField label="Quantidade">
                                 <input
@@ -1029,21 +1157,36 @@ export function ProductsPage() {
                                   }
                                 />
                               </FormField>
-                              <FormField label="Regra">
-                                <select
-                                  className={inputClassName}
-                                  value={condition.mode}
+                              <FormField label={`Valor Venda ${index + 2}`}>
+                                <MoneyInput
+                                  required
+                                  value={condition.salePrice}
                                   onChange={(event) =>
-                                    updateSaleCondition(
+                                    updateSaleConditionPricing(condition.id, "salePrice", event.target.value)
+                                  }
+                                />
+                              </FormField>
+                              <FormField label="% lucro esperado">
+                                <PercentInput
+                                  required
+                                  value={condition.expectedProfitPercent}
+                                  onChange={(event) =>
+                                    updateSaleConditionPricing(
                                       condition.id,
-                                      "mode",
-                                      event.target.value as ProductSaleConditionMode,
+                                      "expectedProfitPercent",
+                                      event.target.value,
                                     )
                                   }
-                                >
-                                  <option value="from_quantity">A partir de</option>
-                                  <option value="every_quantity">A cada</option>
-                                </select>
+                                />
+                              </FormField>
+                              <FormField label="Lucro esperado">
+                                <MoneyInput
+                                  required
+                                  value={condition.expectedProfit}
+                                  onChange={(event) =>
+                                    updateSaleConditionPricing(condition.id, "expectedProfit", event.target.value)
+                                  }
+                                />
                               </FormField>
                               <ActionButton
                                 compact
@@ -1352,19 +1495,23 @@ export function ProductsPage() {
                             {editForm.saleConditions.map((condition, index) => (
                               <div
                                 key={condition.id}
-                                className="grid gap-3 rounded-md border border-slate-200 bg-white p-3 md:grid-cols-[1fr_140px_170px_auto]"
+                                className="grid gap-3 rounded-md border border-slate-200 bg-white p-3 md:grid-cols-[170px_130px_1fr_160px_1fr_auto]"
                               >
-                                <FormField label={`Valor Venda ${index + 2}`}>
-                                  <MoneyInput
-                                    value={condition.salePrice}
+                                <FormField label="Regra">
+                                  <select
+                                    className={inputClassName}
+                                    value={condition.mode}
                                     onChange={(event) =>
                                       updateEditSaleCondition(
                                         condition.id,
-                                        "salePrice",
-                                        numberInputText(event.target.value),
+                                        "mode",
+                                        event.target.value as ProductSaleConditionMode,
                                       )
                                     }
-                                  />
+                                  >
+                                    <option value="from_quantity">A partir de</option>
+                                    <option value="every_quantity">A cada</option>
+                                  </select>
                                 </FormField>
                                 <FormField label="Quantidade">
                                   <input
@@ -1382,21 +1529,37 @@ export function ProductsPage() {
                                     }
                                   />
                                 </FormField>
-                                <FormField label="Regra">
-                                  <select
-                                    className={inputClassName}
-                                    value={condition.mode}
+                                <FormField label={`Valor Venda ${index + 2}`}>
+                                  <MoneyInput
+                                    value={condition.salePrice}
                                     onChange={(event) =>
-                                      updateEditSaleCondition(
+                                      updateEditSaleConditionPricing(condition.id, "salePrice", event.target.value)
+                                    }
+                                  />
+                                </FormField>
+                                <FormField label="% lucro esperado">
+                                  <PercentInput
+                                    value={condition.expectedProfitPercent}
+                                    onChange={(event) =>
+                                      updateEditSaleConditionPricing(
                                         condition.id,
-                                        "mode",
-                                        event.target.value as ProductSaleConditionMode,
+                                        "expectedProfitPercent",
+                                        event.target.value,
                                       )
                                     }
-                                  >
-                                    <option value="from_quantity">A partir de</option>
-                                    <option value="every_quantity">A cada</option>
-                                  </select>
+                                  />
+                                </FormField>
+                                <FormField label="Lucro esperado">
+                                  <MoneyInput
+                                    value={condition.expectedProfit}
+                                    onChange={(event) =>
+                                      updateEditSaleConditionPricing(
+                                        condition.id,
+                                        "expectedProfit",
+                                        event.target.value,
+                                      )
+                                    }
+                                  />
                                 </FormField>
                                 <ActionButton
                                   compact
