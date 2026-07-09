@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { ActionButton } from "./ActionButton";
 
@@ -13,11 +13,35 @@ interface ModalProps {
 }
 
 export function Modal({ title, description, open, onClose, children, footer, wide }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+
+      const openedModals = Array.from(document.querySelectorAll('[data-modal-root="true"]'));
+      const topModal = openedModals[openedModals.length - 1];
+
+      if (topModal !== modalRef.current) return;
+
+      event.stopImmediatePropagation();
+      onClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, open]);
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
       <div
+        ref={modalRef}
+        data-modal-root="true"
         className={[
           "max-h-[92vh] w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-soft",
           wide ? "max-w-5xl" : "max-w-2xl",

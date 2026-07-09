@@ -12,14 +12,23 @@ import { usePharma } from "../../store/PharmaContext";
 import type { Product } from "../../types/domain";
 
 interface ProductFormState {
+  internalCode: string;
   name: string;
   barcode: string;
+  activeIngredient: string;
+  reference: string;
+  content: string;
   category: string;
   subcategory: string;
   manufacturer: string;
+  brand: string;
   supplier: string;
+  ncm: string;
+  ncmDescription: string;
+  purchasePrice: string;
   salePrice: string;
   cost: string;
+  expectedProfitPercent: string;
   stock: string;
   minStock: string;
   maxDiscountPercent: string;
@@ -39,14 +48,23 @@ interface ProductChange {
 type ConfirmDialogMode = "cancel" | "save" | null;
 
 const emptyForm: ProductFormState = {
+  internalCode: "",
   name: "",
   barcode: "",
+  activeIngredient: "",
+  reference: "",
+  content: "",
   category: "Medicamentos",
   subcategory: "Analgesicos",
   manufacturer: "",
-  supplier: "",
+  brand: "",
+  supplier: "Fornecedor a definir",
+  ncm: "30049099",
+  ncmDescription: "",
+  purchasePrice: "",
   salePrice: "",
   cost: "",
+  expectedProfitPercent: "100",
   stock: "",
   minStock: "",
   maxDiscountPercent: "10",
@@ -57,14 +75,23 @@ const emptyForm: ProductFormState = {
 };
 
 const fieldLabels: Record<keyof ProductFormState, string> = {
+  internalCode: "Codigo interno",
   name: "Nome do produto",
   barcode: "Codigo de barras",
+  activeIngredient: "Principio ativo + posologia",
+  reference: "Referencia",
+  content: "Conteudo",
   category: "Categoria",
   subcategory: "Subcategoria",
   manufacturer: "Fabricante",
+  brand: "Marca",
   supplier: "Fornecedor",
+  ncm: "NCM",
+  ncmDescription: "Descricao do NCM",
+  purchasePrice: "Preco de compra",
   salePrice: "Preco de venda",
-  cost: "Custo",
+  cost: "Preco de custo",
+  expectedProfitPercent: "% de lucro esperado",
   stock: "Estoque atual",
   minStock: "Estoque minimo",
   maxDiscountPercent: "Desconto maximo",
@@ -82,16 +109,34 @@ function numberText(value: number) {
   return Number.isFinite(value) ? String(value) : "";
 }
 
+function toNumber(value: string) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function calculateExpectedProfit(form: ProductFormState) {
+  return Number((toNumber(form.cost) * (toNumber(form.expectedProfitPercent) / 100)).toFixed(2));
+}
+
 function productToForm(product: Product): ProductFormState {
   return {
+    internalCode: product.internalCode,
     name: product.name,
     barcode: product.barcode,
+    activeIngredient: product.activeIngredient,
+    reference: product.reference,
+    content: product.content,
     category: product.category,
     subcategory: product.subcategory,
     manufacturer: product.manufacturer,
+    brand: product.brand,
     supplier: product.supplier,
+    ncm: product.ncm,
+    ncmDescription: product.ncmDescription,
+    purchasePrice: numberText(product.purchasePrice),
     salePrice: numberText(product.salePrice),
     cost: numberText(product.cost),
+    expectedProfitPercent: numberText(product.expectedProfitPercent),
     stock: numberText(product.stock),
     minStock: numberText(product.minStock),
     maxDiscountPercent: numberText(product.maxDiscountPercent),
@@ -103,18 +148,34 @@ function productToForm(product: Product): ProductFormState {
 }
 
 function formToProductChanges(form: ProductFormState): Partial<Product> {
+  const cost = toNumber(form.cost);
+  const expectedProfitPercent = toNumber(form.expectedProfitPercent);
+  const expectedProfit = Number((cost * (expectedProfitPercent / 100)).toFixed(2));
+
   return {
+    internalCode: form.internalCode.trim(),
     name: form.name.trim(),
     barcode: form.barcode.trim(),
+    activeIngredient: form.activeIngredient.trim(),
+    reference: form.reference.trim(),
+    content: form.content.trim(),
+    presentation: form.content.trim(),
     category: form.category.trim(),
     subcategory: form.subcategory.trim(),
     manufacturer: form.manufacturer.trim(),
+    brand: form.brand.trim(),
     supplier: form.supplier.trim(),
-    salePrice: Number(form.salePrice),
-    cost: Number(form.cost),
-    stock: Number(form.stock),
-    minStock: Number(form.minStock),
-    maxDiscountPercent: Number(form.maxDiscountPercent),
+    ncm: form.ncm.trim(),
+    ncmDescription: form.ncmDescription.trim(),
+    purchasePrice: toNumber(form.purchasePrice),
+    salePrice: toNumber(form.salePrice),
+    cost,
+    averageCost: cost,
+    expectedProfitPercent,
+    expectedProfit,
+    stock: toNumber(form.stock),
+    minStock: toNumber(form.minStock),
+    maxDiscountPercent: toNumber(form.maxDiscountPercent),
     controlsBatch: form.controlsBatch,
     controlsExpiry: form.controlsExpiry,
     allowFractional: form.allowFractional,
@@ -130,12 +191,19 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
     before: string;
     after: string;
   }> = [
+    { key: "internalCode", before: product.internalCode, after: form.internalCode.trim() },
     { key: "name", before: product.name, after: form.name.trim() },
     { key: "barcode", before: product.barcode, after: form.barcode.trim() },
+    { key: "activeIngredient", before: product.activeIngredient, after: form.activeIngredient.trim() },
+    { key: "reference", before: product.reference, after: form.reference.trim() },
+    { key: "content", before: product.content, after: form.content.trim() },
     { key: "category", before: product.category, after: form.category.trim() },
     { key: "subcategory", before: product.subcategory, after: form.subcategory.trim() },
     { key: "manufacturer", before: product.manufacturer, after: form.manufacturer.trim() },
+    { key: "brand", before: product.brand, after: form.brand.trim() },
     { key: "supplier", before: product.supplier, after: form.supplier.trim() },
+    { key: "ncm", before: product.ncm, after: form.ncm.trim() },
+    { key: "ncmDescription", before: product.ncmDescription, after: form.ncmDescription.trim() },
   ];
 
   const numericComparisons: Array<{
@@ -144,17 +212,26 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
     after: number;
     format?: (value: number) => string;
   }> = [
-    { key: "salePrice", before: product.salePrice, after: Number(form.salePrice), format: formatCurrency },
-    { key: "cost", before: product.cost, after: Number(form.cost), format: formatCurrency },
-    { key: "stock", before: product.stock, after: Number(form.stock) },
-    { key: "minStock", before: product.minStock, after: Number(form.minStock) },
+    { key: "purchasePrice", before: product.purchasePrice, after: toNumber(form.purchasePrice), format: formatCurrency },
+    { key: "cost", before: product.cost, after: toNumber(form.cost), format: formatCurrency },
+    {
+      key: "expectedProfitPercent",
+      before: product.expectedProfitPercent,
+      after: toNumber(form.expectedProfitPercent),
+      format: percent,
+    },
+    { key: "salePrice", before: product.salePrice, after: toNumber(form.salePrice), format: formatCurrency },
+    { key: "stock", before: product.stock, after: toNumber(form.stock) },
+    { key: "minStock", before: product.minStock, after: toNumber(form.minStock) },
     {
       key: "maxDiscountPercent",
       before: product.maxDiscountPercent,
-      after: Number(form.maxDiscountPercent),
+      after: toNumber(form.maxDiscountPercent),
       format: percent,
     },
   ];
+
+  const expectedProfitChanged = product.expectedProfit !== calculateExpectedProfit(form);
 
   const booleanComparisons: Array<{
     key: keyof ProductFormState;
@@ -184,6 +261,16 @@ function getProductChanges(product: Product | null, form: ProductFormState): Pro
         before: comparison.format ? comparison.format(comparison.before) : String(comparison.before),
         after: comparison.format ? comparison.format(comparison.after) : String(comparison.after),
       })),
+    ...(expectedProfitChanged
+      ? [
+          {
+            key: "expectedProfitPercent" as keyof ProductFormState,
+            label: "Lucro esperado",
+            before: formatCurrency(product.expectedProfit),
+            after: formatCurrency(calculateExpectedProfit(form)),
+          },
+        ]
+      : []),
     ...booleanComparisons
       .filter((comparison) => comparison.before !== comparison.after)
       .map((comparison) => ({
@@ -211,7 +298,19 @@ export function ProductsPage() {
     if (!term) return products;
 
     return products.filter((product) =>
-      [product.name, product.internalCode, product.barcode, product.reference, product.category, product.subcategory]
+      [
+        product.name,
+        product.internalCode,
+        product.barcode,
+        product.reference,
+        product.activeIngredient,
+        product.content,
+        product.manufacturer,
+        product.brand,
+        product.category,
+        product.subcategory,
+        product.ncm,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(term),
@@ -291,17 +390,26 @@ export function ProductsPage() {
     event.preventDefault();
 
     addProduct({
+      internalCode: form.internalCode,
       name: form.name,
       barcode: form.barcode,
+      activeIngredient: form.activeIngredient,
+      reference: form.reference,
+      content: form.content,
       category: form.category,
       subcategory: form.subcategory,
       manufacturer: form.manufacturer,
+      brand: form.brand,
       supplier: form.supplier,
-      salePrice: Number(form.salePrice),
-      cost: Number(form.cost),
-      stock: Number(form.stock),
-      minStock: Number(form.minStock),
-      maxDiscountPercent: Number(form.maxDiscountPercent),
+      ncm: form.ncm,
+      ncmDescription: form.ncmDescription,
+      purchasePrice: toNumber(form.purchasePrice),
+      salePrice: toNumber(form.salePrice),
+      cost: toNumber(form.cost),
+      expectedProfitPercent: toNumber(form.expectedProfitPercent),
+      stock: toNumber(form.stock),
+      minStock: toNumber(form.minStock),
+      maxDiscountPercent: toNumber(form.maxDiscountPercent),
       controlsBatch: form.controlsBatch,
       controlsExpiry: form.controlsExpiry,
       allowFractional: form.allowFractional,
@@ -445,20 +553,69 @@ export function ProductsPage() {
                 label: "Cadastro",
                 content: (
                   <div className="grid gap-4 md:grid-cols-2">
-                    <FormField label="Nome do produto">
-                      <input
-                        required
-                        className={inputClassName}
-                        value={form.name}
-                        onChange={(event) => updateForm("name", event.target.value)}
-                      />
-                    </FormField>
                     <FormField label="Codigo de barras">
                       <input
                         required
                         className={inputClassName}
                         value={form.barcode}
                         onChange={(event) => updateForm("barcode", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Codigo interno">
+                      <input
+                        className={inputClassName}
+                        placeholder="Gerado automaticamente se ficar vazio"
+                        value={form.internalCode}
+                        onChange={(event) => updateForm("internalCode", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Nome">
+                      <input
+                        required
+                        className={inputClassName}
+                        placeholder="Referencia ou similar"
+                        value={form.name}
+                        onChange={(event) => updateForm("name", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Principio ativo + posologia">
+                      <input
+                        required
+                        className={inputClassName}
+                        value={form.activeIngredient}
+                        onChange={(event) => updateForm("activeIngredient", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Referencia">
+                      <input
+                        className={inputClassName}
+                        value={form.reference}
+                        onChange={(event) => updateForm("reference", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Conteudo">
+                      <input
+                        required
+                        className={inputClassName}
+                        placeholder="20 comprimidos, 60ml xarope"
+                        value={form.content}
+                        onChange={(event) => updateForm("content", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Fabricante">
+                      <input
+                        required
+                        className={inputClassName}
+                        value={form.manufacturer}
+                        onChange={(event) => updateForm("manufacturer", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Marca">
+                      <input
+                        required
+                        className={inputClassName}
+                        value={form.brand}
+                        onChange={(event) => updateForm("brand", event.target.value)}
                       />
                     </FormField>
                     <FormField label="Categoria">
@@ -491,31 +648,20 @@ export function ProductsPage() {
                         ))}
                       </select>
                     </FormField>
-                    <FormField label="Fabricante">
+                    <FormField label="NCM">
                       <input
                         required
                         className={inputClassName}
-                        value={form.manufacturer}
-                        onChange={(event) => updateForm("manufacturer", event.target.value)}
+                        value={form.ncm}
+                        onChange={(event) => updateForm("ncm", event.target.value)}
                       />
                     </FormField>
-                    <FormField label="Fornecedor">
+                    <FormField label="Descricao do NCM">
                       <input
                         required
                         className={inputClassName}
-                        value={form.supplier}
-                        onChange={(event) => updateForm("supplier", event.target.value)}
-                      />
-                    </FormField>
-                    <FormField label="Preco de venda">
-                      <input
-                        required
-                        min="0"
-                        step="0.01"
-                        type="number"
-                        className={inputClassName}
-                        value={form.salePrice}
-                        onChange={(event) => updateForm("salePrice", event.target.value)}
+                        value={form.ncmDescription}
+                        onChange={(event) => updateForm("ncmDescription", event.target.value)}
                       />
                     </FormField>
                   </div>
@@ -526,7 +672,18 @@ export function ProductsPage() {
                 label: "Estoque",
                 content: (
                   <div className="grid gap-4 md:grid-cols-3">
-                    <FormField label="Custo">
+                    <FormField label="Preco de compra">
+                      <input
+                        required
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        className={inputClassName}
+                        value={form.purchasePrice}
+                        onChange={(event) => updateForm("purchasePrice", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Preco de custo">
                       <input
                         required
                         min="0"
@@ -537,15 +694,33 @@ export function ProductsPage() {
                         onChange={(event) => updateForm("cost", event.target.value)}
                       />
                     </FormField>
-                    <FormField label="Estoque atual">
+                    <FormField label="% de lucro esperado">
                       <input
                         required
                         min="0"
-                        step="1"
+                        step="0.01"
                         type="number"
                         className={inputClassName}
-                        value={form.stock}
-                        onChange={(event) => updateForm("stock", event.target.value)}
+                        value={form.expectedProfitPercent}
+                        onChange={(event) => updateForm("expectedProfitPercent", event.target.value)}
+                      />
+                    </FormField>
+                    <FormField label="Lucro esperado">
+                      <input
+                        readOnly
+                        className={`${inputClassName} bg-slate-50 font-semibold text-slate-600`}
+                        value={formatCurrency(calculateExpectedProfit(form))}
+                      />
+                    </FormField>
+                    <FormField label="Valor Venda 1">
+                      <input
+                        required
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        className={inputClassName}
+                        value={form.salePrice}
+                        onChange={(event) => updateForm("salePrice", event.target.value)}
                       />
                     </FormField>
                     <FormField label="Estoque minimo">
@@ -559,6 +734,40 @@ export function ProductsPage() {
                         onChange={(event) => updateForm("minStock", event.target.value)}
                       />
                     </FormField>
+                    <FormField label="Estoque atual">
+                      <input
+                        required
+                        min="0"
+                        step="1"
+                        type="number"
+                        className={inputClassName}
+                        value={form.stock}
+                        onChange={(event) => updateForm("stock", event.target.value)}
+                      />
+                    </FormField>
+                  </div>
+                ),
+              },
+              {
+                id: "comercial",
+                label: "Regras",
+                content: (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FormField label="Desconto maximo (%)">
+                      <input
+                        required
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        type="number"
+                        className={inputClassName}
+                        value={form.maxDiscountPercent}
+                        onChange={(event) => updateForm("maxDiscountPercent", event.target.value)}
+                      />
+                    </FormField>
+                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                      Produtos SNGPC exigem receita no fluxo do balcao. Integracao real fica fora do MVP.
+                    </div>
                     {[
                       ["controlsBatch", "Controla lote"],
                       ["controlsExpiry", "Controla vencimento"],
@@ -576,29 +785,6 @@ export function ProductsPage() {
                         {label}
                       </label>
                     ))}
-                  </div>
-                ),
-              },
-              {
-                id: "comercial",
-                label: "Comercial",
-                content: (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField label="Desconto maximo (%)">
-                      <input
-                        required
-                        min="0"
-                        max="100"
-                        step="0.5"
-                        type="number"
-                        className={inputClassName}
-                        value={form.maxDiscountPercent}
-                        onChange={(event) => updateForm("maxDiscountPercent", event.target.value)}
-                      />
-                    </FormField>
-                    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      Produtos SNGPC exigem receita no fluxo do balcao. Integracao real fica fora do MVP.
-                    </div>
                   </div>
                 ),
               },
@@ -670,7 +856,21 @@ export function ProductsPage() {
                   label: "Cadastro",
                   content: (
                     <div className="grid gap-4 md:grid-cols-2">
-                      <FormField label="Nome do produto">
+                      <FormField label="Codigo de barras">
+                        <input
+                          className={inputClassName}
+                          value={editForm.barcode}
+                          onChange={(event) => updateEditForm("barcode", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Codigo interno">
+                        <input
+                          className={inputClassName}
+                          value={editForm.internalCode}
+                          onChange={(event) => updateEditForm("internalCode", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Nome">
                         <input
                           className={inputClassName}
                           data-testid="product-edit-name"
@@ -678,11 +878,39 @@ export function ProductsPage() {
                           onChange={(event) => updateEditForm("name", event.target.value)}
                         />
                       </FormField>
-                      <FormField label="Codigo de barras">
+                      <FormField label="Principio ativo + posologia">
                         <input
                           className={inputClassName}
-                          value={editForm.barcode}
-                          onChange={(event) => updateEditForm("barcode", event.target.value)}
+                          value={editForm.activeIngredient}
+                          onChange={(event) => updateEditForm("activeIngredient", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Referencia">
+                        <input
+                          className={inputClassName}
+                          value={editForm.reference}
+                          onChange={(event) => updateEditForm("reference", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Conteudo">
+                        <input
+                          className={inputClassName}
+                          value={editForm.content}
+                          onChange={(event) => updateEditForm("content", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Fabricante">
+                        <input
+                          className={inputClassName}
+                          value={editForm.manufacturer}
+                          onChange={(event) => updateEditForm("manufacturer", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Marca">
+                        <input
+                          className={inputClassName}
+                          value={editForm.brand}
+                          onChange={(event) => updateEditForm("brand", event.target.value)}
                         />
                       </FormField>
                       <FormField label="Categoria">
@@ -713,28 +941,18 @@ export function ProductsPage() {
                           ))}
                         </select>
                       </FormField>
-                      <FormField label="Fabricante">
+                      <FormField label="NCM">
                         <input
                           className={inputClassName}
-                          value={editForm.manufacturer}
-                          onChange={(event) => updateEditForm("manufacturer", event.target.value)}
+                          value={editForm.ncm}
+                          onChange={(event) => updateEditForm("ncm", event.target.value)}
                         />
                       </FormField>
-                      <FormField label="Fornecedor">
+                      <FormField label="Descricao do NCM">
                         <input
                           className={inputClassName}
-                          value={editForm.supplier}
-                          onChange={(event) => updateEditForm("supplier", event.target.value)}
-                        />
-                      </FormField>
-                      <FormField label="Preco de venda">
-                        <input
-                          min="0"
-                          step="0.01"
-                          type="number"
-                          className={inputClassName}
-                          value={editForm.salePrice}
-                          onChange={(event) => updateEditForm("salePrice", event.target.value)}
+                          value={editForm.ncmDescription}
+                          onChange={(event) => updateEditForm("ncmDescription", event.target.value)}
                         />
                       </FormField>
                     </div>
@@ -745,7 +963,17 @@ export function ProductsPage() {
                   label: "Estoque",
                   content: (
                     <div className="grid gap-4 md:grid-cols-3">
-                      <FormField label="Custo">
+                      <FormField label="Preco de compra">
+                        <input
+                          min="0"
+                          step="0.01"
+                          type="number"
+                          className={inputClassName}
+                          value={editForm.purchasePrice}
+                          onChange={(event) => updateEditForm("purchasePrice", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Preco de custo">
                         <input
                           min="0"
                           step="0.01"
@@ -755,14 +983,31 @@ export function ProductsPage() {
                           onChange={(event) => updateEditForm("cost", event.target.value)}
                         />
                       </FormField>
-                      <FormField label="Estoque atual">
+                      <FormField label="% de lucro esperado">
                         <input
                           min="0"
-                          step="1"
+                          step="0.01"
                           type="number"
                           className={inputClassName}
-                          value={editForm.stock}
-                          onChange={(event) => updateEditForm("stock", event.target.value)}
+                          value={editForm.expectedProfitPercent}
+                          onChange={(event) => updateEditForm("expectedProfitPercent", event.target.value)}
+                        />
+                      </FormField>
+                      <FormField label="Lucro esperado">
+                        <input
+                          readOnly
+                          className={`${inputClassName} bg-slate-50 font-semibold text-slate-600`}
+                          value={formatCurrency(calculateExpectedProfit(editForm))}
+                        />
+                      </FormField>
+                      <FormField label="Valor Venda 1">
+                        <input
+                          min="0"
+                          step="0.01"
+                          type="number"
+                          className={inputClassName}
+                          value={editForm.salePrice}
+                          onChange={(event) => updateEditForm("salePrice", event.target.value)}
                         />
                       </FormField>
                       <FormField label="Estoque minimo">
@@ -775,6 +1020,39 @@ export function ProductsPage() {
                           onChange={(event) => updateEditForm("minStock", event.target.value)}
                         />
                       </FormField>
+                      <FormField label="Estoque atual">
+                        <input
+                          min="0"
+                          step="1"
+                          type="number"
+                          className={inputClassName}
+                          value={editForm.stock}
+                          onChange={(event) => updateEditForm("stock", event.target.value)}
+                        />
+                      </FormField>
+                    </div>
+                  ),
+                },
+                {
+                  id: "comercial",
+                  label: "Regras",
+                  content: (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <FormField label="Desconto maximo (%)">
+                        <input
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          type="number"
+                          className={inputClassName}
+                          value={editForm.maxDiscountPercent}
+                          onChange={(event) => updateEditForm("maxDiscountPercent", event.target.value)}
+                        />
+                      </FormField>
+                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                        Alteracoes em preco, desconto e estoque passam a valer imediatamente nos fluxos
+                        mockados de Balcao e PDV.
+                      </div>
                       {[
                         ["controlsBatch", "Controla lote"],
                         ["controlsExpiry", "Controla vencimento"],
@@ -792,29 +1070,6 @@ export function ProductsPage() {
                           {label}
                         </label>
                       ))}
-                    </div>
-                  ),
-                },
-                {
-                  id: "comercial",
-                  label: "Comercial",
-                  content: (
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField label="Desconto maximo (%)">
-                        <input
-                          min="0"
-                          max="100"
-                          step="0.5"
-                          type="number"
-                          className={inputClassName}
-                          value={editForm.maxDiscountPercent}
-                          onChange={(event) => updateEditForm("maxDiscountPercent", event.target.value)}
-                        />
-                      </FormField>
-                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                        Alteracoes em preco, desconto e estoque passam a valer imediatamente nos fluxos
-                        mockados de Balcao e PDV.
-                      </div>
                     </div>
                   ),
                 },

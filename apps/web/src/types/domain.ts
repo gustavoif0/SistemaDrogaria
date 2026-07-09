@@ -46,9 +46,11 @@ export interface Product {
   category: string;
   subcategory: string;
   manufacturer: string;
+  brand: string;
   supplier: string;
   activeIngredient: string;
   presentation: string;
+  content: string;
   msRegistration: string;
   status: ProductStatus;
   allowDiscount: boolean;
@@ -61,12 +63,15 @@ export interface Product {
   participatesPopularPharmacy: boolean;
   taxGroup: string;
   ncm: string;
+  ncmDescription: string;
   cest: string;
   cfop: string;
   purchasePrice: number;
   cost: number;
   averageCost: number;
   suggestedPrice: number;
+  expectedProfitPercent: number;
+  expectedProfit: number;
   salePrice: number;
   minStock: number;
   maxStock: number;

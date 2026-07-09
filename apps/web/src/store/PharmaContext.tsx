@@ -31,14 +31,23 @@ import { buildStockAlerts, summarizeItems, validateSaleItem } from "../lib/sales
 
 type ProductDraft = Pick<
   Product,
+  | "internalCode"
   | "name"
   | "barcode"
+  | "reference"
   | "category"
   | "subcategory"
   | "manufacturer"
+  | "brand"
   | "supplier"
+  | "activeIngredient"
+  | "content"
+  | "ncm"
+  | "ncmDescription"
+  | "purchasePrice"
   | "salePrice"
   | "cost"
+  | "expectedProfitPercent"
   | "stock"
   | "minStock"
   | "maxDiscountPercent"
@@ -102,11 +111,12 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
   );
 
   const addProduct = useCallback((draft: ProductDraft) => {
+    const expectedProfit = Number((draft.cost * (draft.expectedProfitPercent / 100)).toFixed(2));
     const product: Product = {
       id: makeId("prod"),
-      internalCode: makeNumber("MED", 4),
+      internalCode: draft.internalCode.trim() || makeNumber("MED", 4),
       barcode: draft.barcode,
-      reference: draft.reference ?? draft.name.slice(0, 8).toUpperCase(),
+      reference: draft.reference.trim() || draft.name.slice(0, 8).toUpperCase(),
       name: draft.name,
       description: draft.description ?? "Cadastro criado no MVP academico.",
       unit: draft.unit ?? "CX",
@@ -114,9 +124,11 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       category: draft.category,
       subcategory: draft.subcategory ?? "Sem subcategoria",
       manufacturer: draft.manufacturer,
+      brand: draft.brand,
       supplier: draft.supplier,
-      activeIngredient: draft.activeIngredient ?? "Nao informado",
-      presentation: draft.presentation ?? "Apresentacao comercial",
+      activeIngredient: draft.activeIngredient,
+      presentation: draft.presentation ?? draft.content,
+      content: draft.content,
       msRegistration: draft.msRegistration ?? "Isento",
       status: draft.status ?? "active",
       allowDiscount: draft.allowDiscount ?? true,
@@ -128,13 +140,16 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       participatesPbm: draft.participatesPbm ?? false,
       participatesPopularPharmacy: draft.participatesPopularPharmacy ?? false,
       taxGroup: draft.taxGroup ?? "Medicamento tributado",
-      ncm: draft.ncm ?? "30049099",
+      ncm: draft.ncm,
+      ncmDescription: draft.ncmDescription,
       cest: draft.cest ?? "13.001.00",
       cfop: draft.cfop ?? "5102",
-      purchasePrice: draft.purchasePrice ?? draft.cost,
+      purchasePrice: draft.purchasePrice,
       cost: draft.cost,
       averageCost: draft.averageCost ?? draft.cost,
       suggestedPrice: draft.suggestedPrice ?? draft.salePrice,
+      expectedProfitPercent: draft.expectedProfitPercent,
+      expectedProfit,
       salePrice: draft.salePrice,
       minStock: draft.minStock,
       maxStock: draft.maxStock ?? draft.stock * 3,

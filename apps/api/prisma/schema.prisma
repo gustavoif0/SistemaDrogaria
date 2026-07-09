@@ -140,6 +140,7 @@ model Product {
   manufacturer                 Manufacturer?       @relation(fields: [manufacturerId], references: [id])
   supplierId                   String?
   supplier                     Supplier?           @relation(fields: [supplierId], references: [id])
+  brand                        String?
   internalCode                 String
   barcode                      String?
   reference                    String?
@@ -147,6 +148,7 @@ model Product {
   description                  String?
   unit                         String
   activeIngredient             String?
+  content                      String?
   msRegistration               String?
   status                       ProductStatus       @default(active)
   allowDiscount                Boolean             @default(true)
@@ -158,6 +160,7 @@ model Product {
   participatesPbm              Boolean             @default(false)
   participatesPopularPharmacy  Boolean             @default(false)
   ncm                          String?
+  ncmDescription               String?
   cest                         String?
   cfop                         String?
   stockBalances                StockBalance[]
