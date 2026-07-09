@@ -1,5 +1,5 @@
 import { AlertTriangle, PackagePlus, Pencil, Plus, Save, XCircle } from "lucide-react";
-import { useMemo, useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { ActionButton } from "../../components/ui/ActionButton";
 import { BadgeStatus } from "../../components/ui/BadgeStatus";
 import { DataTable } from "../../components/ui/DataTable";
@@ -57,6 +57,12 @@ interface ProductChange {
 }
 
 type ConfirmDialogMode = "cancel" | "save" | null;
+
+interface ProductContextMenuState {
+  productId: string;
+  x: number;
+  y: number;
+}
 
 const emptyForm: ProductFormState = {
   internalCode: "",
@@ -418,6 +424,9 @@ export function ProductsPage() {
   const [activeTab, setActiveTab] = useState("cadastro");
   const [editActiveTab, setEditActiveTab] = useState("cadastro");
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogMode>(null);
+  const [contextMenu, setContextMenu] = useState<ProductContextMenuState | null>(null);
+  const lastProductClickRef = useRef<{ productId: string; timestamp: number } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const filteredProducts = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -448,6 +457,32 @@ export function ProductsPage() {
     [editForm, editProduct],
   );
   const hasEditChanges = editChanges.length > 0;
+  const selectedProduct = useMemo(
+    () => filteredProducts.find((product) => product.id === contextMenu?.productId) ?? null,
+    [contextMenu?.productId, filteredProducts],
+  );
+
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (event.target instanceof Node && contextMenuRef.current?.contains(event.target)) return;
+
+      setContextMenu(null);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setContextMenu(null);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [contextMenu]);
 
   function updateForm<K extends keyof ProductFormState>(key: K, value: ProductFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -720,11 +755,38 @@ export function ProductsPage() {
     setEditForm((current) => ({ ...current, category: categoryName, subcategory: firstSubcategory }));
   }
 
+  function getContextMenuPosition(position: { x: number; y: number }) {
+    const menuWidth = 128;
+    const menuHeight = 48;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    return {
+      x: Math.max(8, Math.min(position.x + 8, viewportWidth - menuWidth - 8)),
+      y: Math.max(8, Math.min(position.y + 8, viewportHeight - menuHeight - 8)),
+    };
+  }
+
   function openEdit(product: Product) {
     setEditProduct(product);
     setEditForm(productToForm(product));
     setEditActiveTab("cadastro");
     setConfirmDialog(null);
+    setContextMenu(null);
+  }
+
+  function handleProductRowClick(product: Product, position: { x: number; y: number }) {
+    const now = Date.now();
+    const lastClick = lastProductClickRef.current;
+
+    if (lastClick?.productId === product.id && now - lastClick.timestamp <= 1000) {
+      lastProductClickRef.current = null;
+      openEdit(product);
+      return;
+    }
+
+    lastProductClickRef.current = { productId: product.id, timestamp: now };
+    setContextMenu({ productId: product.id, ...getContextMenuPosition(position) });
   }
 
   function closeEdit() {
@@ -841,6 +903,8 @@ export function ProductsPage() {
         <DataTable
           data={filteredProducts}
           getRowKey={(product) => product.id}
+          isRowSelected={(product) => contextMenu?.productId === product.id}
+          onRowClick={handleProductRowClick}
           columns={[
             {
               header: "Produto",
@@ -881,23 +945,29 @@ export function ProductsPage() {
               align: "right",
               render: (product) => (product.allowDiscount ? percent(product.maxDiscountPercent) : "Bloq."),
             },
-            {
-              header: "Acao",
-              align: "center",
-              render: (product) => (
-                <ActionButton
-                  compact
-                  data-testid={`products-edit-${product.id}`}
-                  icon={Pencil}
-                  onClick={() => openEdit(product)}
-                  variant="ghost"
-                >
-                  Editar
-                </ActionButton>
-              ),
-            },
           ]}
         />
+
+        {contextMenu && selectedProduct ? (
+          <div
+            ref={contextMenuRef}
+            aria-label={`Menu de contexto de ${selectedProduct.name}`}
+            className="fixed z-50 min-w-28 rounded-md border border-slate-700 bg-slate-950 p-1 shadow-xl"
+            role="menu"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              className="flex h-10 w-full items-center gap-2 rounded px-3 text-left text-sm font-medium text-white transition hover:bg-white/10 focus:bg-white/10 focus:outline-none"
+              data-testid={`products-context-edit-${selectedProduct.id}`}
+              onClick={() => openEdit(selectedProduct)}
+              role="menuitem"
+              type="button"
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Editar
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <Modal
