@@ -12,17 +12,70 @@ Primeira base funcional do ERP web para drogarias/farmacias, criada a partir do 
 
 ## Como rodar
 
-```bash
-npm install
-npm run dev
+### 1. Conferir ferramentas
+
+Antes de instalar as dependencias, confira as versoes no PowerShell:
+
+```powershell
+node -v
+npm.cmd -v
+where.exe node
+where.exe npm
 ```
 
-O frontend abre em `http://127.0.0.1:5173`.
+Versoes necessarias para este projeto:
+
+- Node.js 18 ou superior.
+- npm 8 ou superior.
+
+Padrao recomendado para manter igual ao PC antigo:
+
+- Node.js `v24.16.0`.
+- npm instalado junto com o Node 24, executado no PowerShell como `npm.cmd`.
+
+Se o comando `npm -v` falhar com erro de `npm.ps1` bloqueado, use `npm.cmd -v`. Isso e esperado quando a politica de execucao do PowerShell bloqueia scripts `.ps1`.
+
+Se aparecer Node `v10.x` ou npm `6.x`, atualize o Node antes de continuar. O Vite usado no frontend nao funciona com Node 10.
+
+### 2. Instalar dependencias
+
+Na raiz do projeto:
+
+```bash
+npm.cmd install
+```
+
+Tambem funciona com `npm install` se o PowerShell da maquina permitir executar `npm.ps1`.
+
+### 3. Rodar em desenvolvimento
+
+Na raiz do projeto:
+
+```bash
+npm.cmd run dev
+```
+
+Importante: rode apenas `npm.cmd run dev` ou `npm run dev`. Nao acrescente `@pharmaerp/web` depois do comando.
+
+O frontend abre em:
+
+```text
+http://127.0.0.1:5173
+```
 
 Build de producao:
 
 ```bash
-npm run build
+npm.cmd run build
+```
+
+### Solucao rapida para PC novo
+
+Se o PC novo estiver com Node `v10.24.1` e npm `6.14.12`, instale o Node `v24.16.0` para Windows, feche e abra o PowerShell, e confira novamente:
+
+```powershell
+node -v
+npm.cmd -v
 ```
 
 ## Rotas entregues

@@ -13,14 +13,14 @@ import type {
 
 export const company: Company = {
   id: "empresa-001",
-  name: "Drogaria Sao Lucas",
+  name: "Drogaria Central Farma",
   document: "12.345.678/0001-90",
-  storeName: "Matriz - Centro",
+  storeName: "Matriz - Compensa",
 };
 
 export const currentUser: UserProfile = {
   id: "user-001",
-  name: "Marina Costa",
+  name: "Gustavo Ferreira",
   role: "Farmaceutica RT",
 };
 
@@ -255,16 +255,16 @@ export const initialMasterData: MasterDataCollections = {
   ],
   employees: [
     {
-      id: "col-marina-costa",
+      id: "col-gustavo-ferreira",
       code: "COL-001",
-      name: "Marina Costa",
+      name: "Gustavo Ferreira",
       document: "321.654.987-00",
       contactName: "",
       phone: "(92) 98888-0201",
-      email: "marina.costa@drogaria.example",
+      email: "gussanxz@gmail.com",
       city: "Manaus",
       state: "AM",
-      role: "Farmaceutica RT",
+      role: "Desenvolvedor",
       notes: "Responsavel tecnica no fluxo academico.",
       status: "active",
     },
