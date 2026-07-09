@@ -34,6 +34,16 @@ export interface Batch {
   quantity: number;
 }
 
+export type ProductSaleConditionMode = "from_quantity" | "every_quantity";
+
+export interface ProductSaleCondition {
+  id: string;
+  label: string;
+  salePrice: number;
+  quantity: number;
+  mode: ProductSaleConditionMode;
+}
+
 export interface Product {
   id: string;
   internalCode: string;
@@ -73,6 +83,7 @@ export interface Product {
   expectedProfitPercent: number;
   expectedProfit: number;
   salePrice: number;
+  saleConditions: ProductSaleCondition[];
   minStock: number;
   maxStock: number;
   stock: number;

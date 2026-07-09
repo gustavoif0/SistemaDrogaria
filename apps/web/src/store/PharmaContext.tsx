@@ -48,6 +48,8 @@ type ProductDraft = Pick<
   | "salePrice"
   | "cost"
   | "expectedProfitPercent"
+  | "expectedProfit"
+  | "saleConditions"
   | "stock"
   | "minStock"
   | "maxDiscountPercent"
@@ -111,7 +113,9 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
   );
 
   const addProduct = useCallback((draft: ProductDraft) => {
-    const expectedProfit = Number((draft.cost * (draft.expectedProfitPercent / 100)).toFixed(2));
+    const expectedProfit =
+      draft.expectedProfit ??
+      Number((draft.cost + draft.cost * (draft.expectedProfitPercent / 100)).toFixed(2));
     const product: Product = {
       id: makeId("prod"),
       internalCode: draft.internalCode.trim() || makeNumber("MED", 4),
@@ -151,6 +155,7 @@ export function PharmaProvider({ children }: { children: ReactNode }) {
       expectedProfitPercent: draft.expectedProfitPercent,
       expectedProfit,
       salePrice: draft.salePrice,
+      saleConditions: draft.saleConditions ?? [],
       minStock: draft.minStock,
       maxStock: draft.maxStock ?? draft.stock * 3,
       stock: draft.stock,
